@@ -39,6 +39,7 @@ SourceFiles
 #include "direction.H"
 #include "dimensionSet.H"
 #include "VectorSpace.H"
+#include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -129,46 +130,45 @@ public:
         //- Construct from an Istream with a given name and dimensions
         dimensioned(const word&, const dimensionSet&, Istream&);
 
+        //- Construct from an Istream with a given name and units
+        dimensioned(const word&, const unitConversion&, Istream&);
+
         //- Construct from dictionary lookup with a given name and dimensions
         dimensioned(const word&, const dimensionSet&, const dictionary&);
 
+        //- Construct from dictionary lookup with a given name and units
+        dimensioned(const word&, const unitConversion&, const dictionary&);
 
-    // Static member functions
-
-        //- Construct from dictionary, with default dimensions and value.
-        static dimensioned<Type> lookupOrDefault
+        //- Construct from dictionary lookup with a given name and dimensions
+        //  and if not found set to the given default value
+        dimensioned
         (
-            const word&,
+            const word& name,
+            const dimensionSet& dimensions,
+            const dictionary& dict,
+            const Type& defaultValue,
+            const bool writeDefault = dictionary::writeOptionalEntries > 0
+        );
+
+        //- Construct from dictionary lookup with the given name, dimensionless,
+        //  and if not found set to the given default value
+        dimensioned
+        (
+            const word& name,
+            const dictionary& dict,
+            const Type& defaultValue,
+            const bool writeDefault = dictionary::writeOptionalEntries > 0
+        );
+
+        //- Construct from dictionary lookup with the given name and units
+        //  and if not found set to the given default value
+        dimensioned
+        (
+            const word& name,
+            const unitConversion&,
             const dictionary&,
-            const dimensionSet& dims = dimless,
-            const Type& defaultValue = pTraits<Type>::zero
-        );
-
-        //- Construct from dictionary dimensionless with value.
-        static dimensioned<Type> lookupOrDefault
-        (
-            const word&,
-            const dictionary&,
-            const Type& defaultValue = pTraits<Type>::zero
-        );
-
-        //- Construct from dictionary, with default value.
-        //  If the value is not found, it is added into the dictionary.
-        static dimensioned<Type> lookupOrAddToDict
-        (
-            const word&,
-            dictionary&,
-            const dimensionSet& dims = dimless,
-            const Type& defaultValue = pTraits<Type>::zero
-        );
-
-        //- Construct from dictionary, dimensionless with default value.
-        //  If the value is not found, it is added into the dictionary.
-        static dimensioned<Type> lookupOrAddToDict
-        (
-            const word&,
-            dictionary&,
-            const Type& defaultValue = pTraits<Type>::zero
+            const Type& defaultValue,
+            const bool writeDefault = dictionary::writeOptionalEntries > 0
         );
 
 
@@ -202,10 +202,18 @@ public:
         dimensioned<Type> T() const;
 
         //- Update the value of dimensioned<Type>
-        void read(const dictionary&);
+        void read
+        (
+            const dictionary&,
+            const unitConversion& defaultUnits = NullObjectRef<unitConversion>()
+        );
 
         //- Update the value of dimensioned<Type> if found in the dictionary.
-        bool readIfPresent(const dictionary&);
+        bool readIfPresent
+        (
+            const dictionary&,
+            const unitConversion& defaultUnits = NullObjectRef<unitConversion>()
+        );
 
 
     // Member Operators

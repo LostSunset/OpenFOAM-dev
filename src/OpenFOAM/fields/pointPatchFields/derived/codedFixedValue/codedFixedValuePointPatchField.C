@@ -30,21 +30,22 @@ License
 #include "dynamicCode.H"
 #include "dynamicCodeContext.H"
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+template<class Type>
+const Foam::wordList Foam::codedFixedValuePointPatchField<Type>::codeKeys
+(
+    {"code", "codeInclude", "localCode"}
+);
+
+template<class Type>
+const Foam::wordList Foam::codedFixedValuePointPatchField<Type>::codeDictVars
+(
+    {word::null, word::null, word::null}
+);
+
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-template<class Type>
-Foam::wordList Foam::codedFixedValuePointPatchField<Type>::codeKeys() const
-{
-    return {"code", "codeInclude", "localCode"};
-}
-
-
-template<class Type>
-Foam::wordList Foam::codedFixedValuePointPatchField<Type>::codeDictVars() const
-{
-    return {word::null, word::null, word::null};
-}
-
 
 template<class Type>
 void Foam::codedFixedValuePointPatchField<Type>::prepare
@@ -95,15 +96,23 @@ void Foam::codedFixedValuePointPatchField<Type>::prepare
 }
 
 
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
 template<class Type>
-void Foam::codedFixedValuePointPatchField<Type>::clearRedirect() const
+Foam::codedFixedValuePointPatchField<Type>::codedFixedValuePointPatchField
+(
+    const pointPatch& p,
+    const DimensionedField<Type, pointMesh>& iF,
+    const dictionary& dict
+)
+:
+    fixedValuePointPatchField<Type>(p, iF, dict),
+    codedBase(dict, codeKeys, codeDictVars)
 {
-    // Remove instantiation of pointPatchField provided by library
-    redirectPatchFieldPtr_.clear();
+    // Compile the library containing user-defined pointPatchField
+    updateLibrary(dict);
 }
 
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
 Foam::codedFixedValuePointPatchField<Type>::codedFixedValuePointPatchField
@@ -115,22 +124,7 @@ Foam::codedFixedValuePointPatchField<Type>::codedFixedValuePointPatchField
 )
 :
     fixedValuePointPatchField<Type>(ptf, p, iF, mapper),
-    codedBase(ptf),
-    redirectPatchFieldPtr_()
-{}
-
-
-template<class Type>
-Foam::codedFixedValuePointPatchField<Type>::codedFixedValuePointPatchField
-(
-    const pointPatch& p,
-    const DimensionedField<Type, pointMesh>& iF,
-    const dictionary& dict
-)
-:
-    fixedValuePointPatchField<Type>(p, iF, dict),
-    codedBase(dict),
-    redirectPatchFieldPtr_()
+    codedBase(ptf)
 {}
 
 
@@ -142,8 +136,7 @@ Foam::codedFixedValuePointPatchField<Type>::codedFixedValuePointPatchField
 )
 :
     fixedValuePointPatchField<Type>(ptf, iF),
-    codedBase(ptf),
-    redirectPatchFieldPtr_()
+    codedBase(ptf)
 {}
 
 
@@ -155,10 +148,6 @@ Foam::codedFixedValuePointPatchField<Type>::redirectPatchField() const
 {
     if (!redirectPatchFieldPtr_.valid())
     {
-        // Make sure library containing user-defined pointPatchField
-        // is up-to-date
-        updateLibrary();
-
         OStringStream os;
         writeEntry(os, "type", codeName());
         writeEntry(os, "value", static_cast<const Field<Type>&>(*this));
@@ -217,7 +206,7 @@ template<class Type>
 void Foam::codedFixedValuePointPatchField<Type>::write(Ostream& os) const
 {
     fixedValuePointPatchField<Type>::write(os);
-    writeCode(os);
+    codedBase::write(os);
 }
 
 

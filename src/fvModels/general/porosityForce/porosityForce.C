@@ -50,32 +50,26 @@ namespace fv
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::fv::porosityForce::reset()
+void Foam::fv::porosityForce::readCoeffs(const dictionary& dict)
 {
+    if (dict.found("UNames"))
+    {
+        UNames_ = wordList(dict.lookup("UNames"));
+    }
+    else
+    {
+        UNames_ = wordList(1, dict.lookupOrDefault<word>("U", "U"));
+    }
+
     porosityPtr_.reset
     (
         porosityModel::New
         (
             name(),
             mesh(),
-            coeffs()
+            dict
         ).ptr()
     );
-}
-
-
-void Foam::fv::porosityForce::readCoeffs()
-{
-    if (coeffs().found("UNames"))
-    {
-        UNames_ = wordList(coeffs().lookup("UNames"));
-    }
-    else
-    {
-        UNames_ = wordList(1, coeffs().lookupOrDefault<word>("U", "U"));
-    }
-
-    reset();
 }
 
 
@@ -93,7 +87,7 @@ Foam::fv::porosityForce::porosityForce
     UNames_(),
     porosityPtr_(nullptr)
 {
-    readCoeffs();
+    readCoeffs(coeffs(dict));
 }
 
 
@@ -146,20 +140,21 @@ void Foam::fv::porosityForce::addSup
 
 bool Foam::fv::porosityForce::movePoints()
 {
-    // Currently there is no mechanism to update the porous media orientation
+    porosityPtr_->movePoints();
+
     return true;
 }
 
 
 void Foam::fv::porosityForce::topoChange(const polyTopoChangeMap& map)
 {
-    reset();
+    porosityPtr_->topoChange(map);
 }
 
 
 void Foam::fv::porosityForce::mapMesh(const polyMeshMap& map)
 {
-    reset();
+    porosityPtr_->mapMesh(map);
 }
 
 
@@ -168,7 +163,7 @@ void Foam::fv::porosityForce::distribute
     const polyDistributionMap& map
 )
 {
-    reset();
+    porosityPtr_->distribute(map);
 }
 
 
@@ -176,7 +171,7 @@ bool Foam::fv::porosityForce::read(const dictionary& dict)
 {
     if (fvModel::read(dict))
     {
-        readCoeffs();
+        readCoeffs(coeffs(dict));
         return true;
     }
     else

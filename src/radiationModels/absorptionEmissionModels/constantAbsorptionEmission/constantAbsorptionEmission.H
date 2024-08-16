@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -56,9 +56,6 @@ class constant
     public absorptionEmissionModel
 {
     // Private Data
-
-        //- Absorption model dictionary
-        dictionary coeffsDict_;
 
         //- Absorption coefficient / [1/m]
         dimensionedScalar a_;

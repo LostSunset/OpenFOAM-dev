@@ -93,8 +93,18 @@ class codedFvModel
 {
     // Private data
 
+        //- Keywords associated with source code
+        static const wordList codeKeys;
+
+        //- Name of the dictionary variables in the source code
+        static const wordList codeDictVars;
+
         //- The name of the field that this fvModel applies to
         word fieldName_;
+
+        //- Cached coefficients dictionary
+        //  Required for the delayed
+        dictionary coeffsDict_;
 
         //- Underlying functionObject
         mutable autoPtr<fvModel> redirectFvModelPtr_;
@@ -103,7 +113,7 @@ class codedFvModel
     // Private Member Functions
 
         //- Non-virtual read
-        void readCoeffs();
+        void readCoeffs(const dictionary& dict);
 
         //- Return the name of the field's primitive type
         word fieldPrimitiveTypeName() const;
@@ -111,16 +121,8 @@ class codedFvModel
         //- Adapt the context for the current object
         virtual void prepare(dynamicCode&, const dynamicCodeContext&) const;
 
-        //- Clear any redirected objects
-        virtual void clearRedirect() const;
-
-        //- Get the keywords associated with source code
-        virtual wordList codeKeys() const;
-
-        //- Get the name of the dictionary variables in the source code
-        virtual wordList codeDictVars() const;
-
-        //- Dynamically compiled fvModel
+        //- Compile, link and load the coded fvModel if not already loaded
+        //  and return it
         fvModel& redirectFvModel() const;
 
 

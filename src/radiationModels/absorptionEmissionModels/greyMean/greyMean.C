@@ -58,8 +58,7 @@ Foam::radiationModels::absorptionEmissionModels::greyMean::greyMean
     const word& modelName
 )
 :
-    absorptionEmissionModel(dict, mesh),
-    coeffsDict_(dict.subDict(modelName + "Coeffs")),
+    absorptionEmissionModel(mesh),
     speciesNames_(0),
     specieIndex_(label(0)),
     lookUpTablePtr_(),
@@ -74,7 +73,7 @@ Foam::radiationModels::absorptionEmissionModels::greyMean::greyMean
     }
 
     label nFunc = 0;
-    forAllConstIter(dictionary, coeffsDict_, iter)
+    forAllConstIter(dictionary, dict, iter)
     {
         // safety:
         if (!iter().isDict())
@@ -88,16 +87,16 @@ Foam::radiationModels::absorptionEmissionModels::greyMean::greyMean
         nFunc++;
     }
 
-    if (coeffsDict_.found("lookUpTableFileName"))
+    if (dict.found("lookUpTableFileName"))
     {
-        const word name = coeffsDict_.lookup("lookUpTableFileName");
+        const word name = dict.lookup("lookUpTableFileName");
         if (name != "none")
         {
             lookUpTablePtr_.set
             (
                 new interpolationLookUpTable
                 (
-                    fileName(coeffsDict_.lookup("lookUpTableFileName")),
+                    fileName(dict.lookup("lookUpTableFileName")),
                     mesh.time().constant(),
                     mesh
                 )

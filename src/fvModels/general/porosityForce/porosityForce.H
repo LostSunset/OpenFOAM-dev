@@ -96,12 +96,8 @@ class porosityForce
 
     // Private Member Functions
 
-        //- Reset the porosity model
-        //  during construction, re-reading and mesh-change
-        void reset();
-
         //- Non-virtual read
-        void readCoeffs();
+        void readCoeffs(const dictionary& dict);
 
 
 public:

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2016-2021 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2016-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -31,7 +31,7 @@ License
 template<class ThermoType>
 Foam::chemistryReductionMethods::EFA<ThermoType>::EFA
 (
-    const IOdictionary& dict,
+    const dictionary& dict,
     chemistryModel<ThermoType>& chemistry
 )
 :
@@ -74,9 +74,9 @@ Foam::chemistryReductionMethods::EFA<ThermoType>::EFA
             }
         }
     }
-    if (this->coeffsDict_.found("sortPart"))
+    if (this->coeffDict(dict).found("sortPart"))
     {
-        sortPart_ = this->coeffsDict_.template lookup<scalar>("sortPart");
+        sortPart_ = this->coeffDict(dict).template lookup<scalar>("sortPart");
     }
 }
 

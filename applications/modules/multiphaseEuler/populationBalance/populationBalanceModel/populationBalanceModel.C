@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2017-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2017-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -52,6 +52,13 @@ namespace diameterModels
 
 
 // * * * * * * * * * * * * Private Member Functions * * * * * * * * * * * * //
+
+const Foam::dictionary&
+Foam::diameterModels::populationBalanceModel::coeffDict() const
+{
+    return fluid_.subDict("populationBalanceCoeffs").subDict(name_);
+}
+
 
 void Foam::diameterModels::populationBalanceModel::initialiseDmdtfs()
 {
@@ -704,15 +711,11 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
     dmdtfs_(),
     mesh_(fluid_.mesh()),
     name_(name),
-    dict_
-    (
-        fluid_.subDict("populationBalanceCoeffs").subDict(name_)
-    ),
     continuousPhase_
     (
         mesh_.lookupObject<phaseModel>
         (
-            IOobject::groupName("alpha", dict_.lookup("continuousPhase"))
+            IOobject::groupName("alpha", coeffDict().lookup("continuousPhase"))
         )
     ),
     sizeGroups_(),
@@ -733,33 +736,33 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
     ),
     coalescenceModels_
     (
-        dict_.lookup("coalescenceModels"),
+        coeffDict().lookup("coalescenceModels"),
         coalescenceModel::iNew(*this)
     ),
     coalescenceRate_(),
     coalescencePairs_(),
     breakupModels_
     (
-        dict_.lookup("breakupModels"),
+        coeffDict().lookup("breakupModels"),
         breakupModel::iNew(*this)
     ),
     breakupRate_(),
     binaryBreakupModels_
     (
-        dict_.lookup("binaryBreakupModels"),
+        coeffDict().lookup("binaryBreakupModels"),
         binaryBreakupModel::iNew(*this)
     ),
     binaryBreakupRate_(),
     binaryBreakupPairs_(),
     drift_
     (
-        dict_.lookup("driftModels"),
+        coeffDict().lookup("driftModels"),
         driftModel::iNew(*this)
     ),
     driftRate_(),
     nucleation_
     (
-        dict_.lookup("nucleationModels"),
+        coeffDict().lookup("nucleationModels"),
         nucleationModel::iNew(*this)
     ),
     nucleationRate_(),
@@ -843,7 +846,12 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
             i,
             new volScalarField
             (
-                IOobject("Su", fluid_.time().name(), mesh_),
+                IOobject
+                (
+                    IOobject::groupName("Su" + Foam::name(i), this->name()),
+                    fluid_.time().name(),
+                    mesh_
+                ),
                 mesh_,
                 dimensionedScalar(inv(dimTime), 0)
             )
@@ -854,7 +862,12 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
             i,
             new volScalarField
             (
-                IOobject("Sp", fluid_.time().name(), mesh_),
+                IOobject
+                (
+                    IOobject::groupName("Sp" + Foam::name(i), this->name()),
+                    fluid_.time().name(),
+                    mesh_
+                ),
                 mesh_,
                 dimensionedScalar(inv(dimTime), 0)
             )
@@ -871,7 +884,7 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
             (
                 IOobject
                 (
-                     "coalescenceRate",
+                     IOobject::groupName("coalescenceRate", this->name()),
                      mesh_.time().name(),
                      mesh_
                 ),
@@ -897,7 +910,7 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
             (
                 IOobject
                 (
-                    "breakupRate",
+                    IOobject::groupName("breakupRate", this->name()),
                     fluid_.time().name(),
                     mesh_
                 ),
@@ -915,7 +928,7 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
             (
                 IOobject
                 (
-                    "binaryBreakupRate",
+                    IOobject::groupName("binaryBreakupRate", this->name()),
                     fluid_.time().name(),
                     mesh_
                 ),
@@ -951,7 +964,7 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
             (
                 IOobject
                 (
-                    "driftRate",
+                    IOobject::groupName("driftRate", this->name()),
                     fluid_.time().name(),
                     mesh_
                 ),
@@ -969,7 +982,7 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
             (
                 IOobject
                 (
-                    "nucleationRate",
+                    IOobject::groupName("nucleationRate", this->name()),
                     fluid_.time().name(),
                     mesh_
                 ),

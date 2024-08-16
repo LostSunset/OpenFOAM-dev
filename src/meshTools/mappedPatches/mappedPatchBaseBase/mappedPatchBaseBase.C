@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -34,7 +34,19 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+namespace Foam
+{
+    template<>
+    const char*
+        NamedEnum<mappedPatchBaseBase::moveUpdate, 3>::names[] =
+        {"always", "detect", "never"};
+}
+
+const Foam::NamedEnum<Foam::mappedPatchBaseBase::moveUpdate, 3>
+    Foam::mappedPatchBaseBase::moveUpdateNames_;
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::mappedPatchBaseBase::mappedPatchBaseBase(const polyPatch& pp)
 :
@@ -42,7 +54,8 @@ Foam::mappedPatchBaseBase::mappedPatchBaseBase(const polyPatch& pp)
     coupleGroup_(),
     nbrRegionName_(patch_.boundaryMesh().mesh().name()),
     nbrPatchName_(patch_.name()),
-    transform_(true)
+    transform_(true),
+    moveUpdate_(moveUpdate::always)
 {}
 
 
@@ -58,7 +71,8 @@ Foam::mappedPatchBaseBase::mappedPatchBaseBase
     coupleGroup_(),
     nbrRegionName_(nbrRegionName),
     nbrPatchName_(nbrPatchName),
-    transform_(transform)
+    transform_(transform),
+    moveUpdate_(moveUpdate::always)
 {}
 
 
@@ -66,7 +80,7 @@ Foam::mappedPatchBaseBase::mappedPatchBaseBase
 (
     const polyPatch& pp,
     const dictionary& dict,
-    const bool transformIsNone
+    const transformType tt
 )
 :
     patch_(pp),
@@ -88,9 +102,22 @@ Foam::mappedPatchBaseBase::mappedPatchBaseBase
     ),
     transform_
     (
-        transformIsNone
-      ? cyclicTransform(true)
-      : cyclicTransform(dict, false)
+        tt == transformType::none ? cyclicTransform(true)
+      : tt == transformType::defaultNone ? cyclicTransform(dict, true)
+      : tt == transformType::specified ? cyclicTransform(dict, false)
+      : cyclicTransform()
+    ),
+    moveUpdate_
+    (
+        dict.found("moveUpdate")
+      ? moveUpdateNames_.read(dict.lookup("moveUpdate"))
+      : dict.found("reMapAfterMove") // <-- backwards compatibility
+      ? (
+            dict.lookup<bool>("reMapAfterMove")
+          ? moveUpdate::always
+          : moveUpdate::never
+        )
+      : moveUpdate::always
     )
 {
     const bool haveCoupleGroup = coupleGroup_.valid();
@@ -115,6 +142,22 @@ Foam::mappedPatchBaseBase::mappedPatchBaseBase
             << "Either a neighbourPatch should be specified, or samePatch "
             << "should be set to true, not both" << exit(FatalIOError);
     }
+
+    if (tt == transformType::none)
+    {
+        const cyclicTransform::transformTypes cttt =
+            cyclicTransform(dict, true).transformType();
+
+        if (cttt != cyclicTransform::NONE)
+        {
+            FatalIOErrorInFunction(dict)
+                << word(cyclicTransform::transformTypeNames[cttt]).capitalise()
+                << " transform specified for patch '" << patch_.name()
+                << "' in region '" << patch_.boundaryMesh().mesh().name()
+                << "'. This patch does not support transformed mapping."
+                << exit(FatalIOError);
+        }
+    }
 }
 
 
@@ -128,7 +171,8 @@ Foam::mappedPatchBaseBase::mappedPatchBaseBase
     coupleGroup_(mpb.coupleGroup_),
     nbrRegionName_(mpb.nbrRegionName_),
     nbrPatchName_(mpb.nbrPatchName_),
-    transform_(mpb.transform_)
+    transform_(mpb.transform_),
+    moveUpdate_(mpb.moveUpdate_)
 {}
 
 
@@ -175,6 +219,48 @@ const Foam::polyPatch& Foam::mappedPatchBaseBase::nbrPolyPatch() const
 }
 
 
+bool Foam::mappedPatchBaseBase::moving
+(
+    const polyPatch& patch,
+    const polyPatch& nbrPatch
+)
+{
+    const polyMesh& mesh = patch.boundaryMesh().mesh();
+    const polyMesh& nbrMesh = nbrPatch.boundaryMesh().mesh();
+
+    if (!mesh.moving() && !nbrMesh.moving()) return false;
+
+    auto localPatchMoving = [](const polyPatch& patch)
+    {
+        const polyMesh& mesh = patch.boundaryMesh().mesh();
+
+        if (!mesh.moving()) return false;
+
+        const pointField& points = mesh.points();
+        const pointField& oldPoints = mesh.oldPoints();
+
+        // !!! Note that this is an exact binary comparison of the point
+        // positions. This isn't typical, but in most cases where this is
+        // relevant the mesh motion is being switched off entirely for a period
+        // of time, or the motion is only present in another part of the mesh,
+        // and the points in question therefore do not change their value in
+        // any way. This prevents the need for a more substantial calculation
+        // procedure and the specification of tolerances and similar.
+
+        return
+            UIndirectList<point>(points, patch.meshPoints())
+         != UIndirectList<point>(oldPoints, patch.meshPoints());
+    };
+
+    return
+        returnReduce
+        (
+            localPatchMoving(patch) || localPatchMoving(nbrPatch),
+            orOp<bool>()
+        );
+}
+
+
 bool Foam::mappedPatchBaseBase::specified(const dictionary& dict)
 {
     return
@@ -195,6 +281,14 @@ void Foam::mappedPatchBaseBase::write(Ostream& os) const
     coupleGroup_.write(os);
 
     transform_.write(os);
+
+    writeEntryIfDifferent<word>
+    (
+        os,
+        "moveUpdate",
+        moveUpdateNames_[moveUpdate::always],
+        moveUpdateNames_[moveUpdate_]
+    );
 }
 
 

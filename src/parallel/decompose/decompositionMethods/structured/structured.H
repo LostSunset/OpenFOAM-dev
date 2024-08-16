@@ -52,8 +52,6 @@ class structured
 {
     // Private Data
 
-        dictionary methodDict_;
-
         wordReList patches_;
 
         autoPtr<decompositionMethod> method_;
@@ -68,7 +66,11 @@ public:
     // Constructors
 
         //- Construct given the decomposition dictionary
-        structured(const dictionary& decompositionDict);
+        structured
+        (
+            const dictionary& decompositionDict,
+            const dictionary& methodDict
+        );
 
         //- Disallow default bitwise copy construction
         structured(const structured&) = delete;

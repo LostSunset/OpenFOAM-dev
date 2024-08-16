@@ -58,13 +58,15 @@ namespace decompositionMethods
 
 Foam::decompositionMethods::structured::structured
 (
-    const dictionary& decompositionDict
+    const dictionary& decompositionDict,
+    const dictionary& methodDict
 )
 :
-    decompositionMethod(decompositionDict),
-    methodDict_(decompositionDict_.optionalSubDict(typeName + "Coeffs")),
-    patches_(methodDict_.lookup("patches"))
+    decompositionMethod(decompositionDict)
 {
+    methodDict.lookup("patches") >> patches_;
+
+    dictionary methodDict_(methodDict);
     methodDict_.set("numberOfSubdomains", nDomains());
     method_ = decompositionMethod::NewDecomposer(methodDict_);
 }

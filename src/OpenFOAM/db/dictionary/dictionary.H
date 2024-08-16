@@ -260,7 +260,7 @@ public:
 
         //- If true write optional keywords and values
         //  if not present in dictionary
-        static bool writeOptionalEntries;
+        static int writeOptionalEntries;
 
 
     // Constructors
@@ -270,6 +270,9 @@ public:
 
         //- Construct top-level empty dictionary with given name
         dictionary(const fileName& name);
+
+        //- Construct an empty sub-dictionary with given name and parent
+        dictionary(const word& name, const dictionary& parentDict);
 
         //- Construct given the entry name, parent dictionary and Istream,
         //  reading entries until lastEntry or EOF
@@ -500,15 +503,12 @@ public:
 
             //- Find and return a T, if not found return the given default
             //  value.
-            //  If recursive, search parent dictionaries.
-            //  If patternMatch, use regular expressions.
             template<class T>
             T lookupOrDefault
             (
                 const word&,
                 const T&,
-                bool recursive=false,
-                bool patternMatch=true
+                const bool writeDefault = writeOptionalEntries > 0
             ) const;
 
             //- Find and return a T with dimension checking and unit
@@ -521,8 +521,7 @@ public:
                 const word&,
                 const unitConversion&,
                 const T&,
-                bool recursive=false,
-                bool patternMatch=true
+                const bool writeDefault = writeOptionalEntries > 0
             ) const;
 
             //- Find and return a T, trying a list of keywords in sequence,
@@ -534,9 +533,7 @@ public:
             T lookupOrDefaultBackwardsCompatible
             (
                 const wordList&,
-                const T&,
-                bool recursive=false,
-                bool patternMatch=true
+                const T&
             ) const;
 
             //- Find and return a T, with dimension checking and unit
@@ -550,9 +547,7 @@ public:
             (
                 const wordList&,
                 const unitConversion&,
-                const T&,
-                bool recursive=false,
-                bool patternMatch=true
+                const T&
             ) const;
 
             //- Find and return a T, if not found return the given
@@ -563,9 +558,7 @@ public:
             T lookupOrAddDefault
             (
                 const word&,
-                const T&,
-                bool recursive=false,
-                bool patternMatch=true
+                const T&
             );
 
             //- Find an entry if present, and assign to T.
@@ -655,9 +648,9 @@ public:
             //  sequence, otherwise error.
             const dictionary& subDictBackwardsCompatible(const wordList&) const;
 
-            //- Find and return a sub-dictionary as a copy, or
-            //  return an empty dictionary if the sub-dictionary does not exist
-            dictionary subOrEmptyDict
+            //- Find and return a sub-dictionary
+            //  or empty dictionary if the sub-dictionary does not exist
+            const dictionary& subOrEmptyDict
             (
                 const word&,
                 const bool mustRead = false
@@ -756,6 +749,9 @@ public:
 
             //- Remove an entry specified by keyword
             bool remove(const word&);
+
+            //- Remove entries specified by keywords
+            void remove(const wordList&);
 
             //- Change the keyword for an entry,
             //  optionally forcing overwrite of an existing entry

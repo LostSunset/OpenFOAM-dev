@@ -52,14 +52,29 @@ class dynamicCodeContext
 {
     // Private Data
 
-        //- The context dictionary
-        const dictionary& contextDict_;
+        //- Keywords associated with source code
+        const wordList& codeKeys_;
+
+        //- Name of the dictionary variables in the source code
+        const wordList& codeDictVars_;
+
+        //- Code strings
+        //  Stored to write for restart
+        List<verbatimString> codeStrings_;
 
         //- Code entries
         HashTable<string> code_;
 
+        //- Optional "codeOptions" string
+        //  Stored to write for restart
+        verbatimString optionsString_;
+
         //- Optional "codeOptions" entry
         string options_;
+
+        //- Optional "codeLibs" string
+        //  Stored to write for restart
+        verbatimString libsString_;
 
         //- Optional "codeLibs" entry
         string libs_;
@@ -106,12 +121,6 @@ public:
 
     // Member Functions
 
-        //- Return the context dictionary
-        const dictionary& dict() const
-        {
-            return contextDict_;
-        }
-
         //- Return the code table
         const HashTable<string>& code() const
         {
@@ -135,6 +144,17 @@ public:
         {
             return sha1_;
         }
+
+        void read
+        (
+            const dictionary& contextDict,
+            const dictionary& codeDict
+        );
+
+        void read(const dictionary& contextDict);
+
+        //- Write the code for restart
+        void write(Ostream& os) const;
 };
 
 

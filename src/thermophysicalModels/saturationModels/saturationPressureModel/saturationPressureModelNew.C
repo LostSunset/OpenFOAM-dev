@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2015-2022 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2015-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -66,7 +66,7 @@ Foam::saturationPressureModel::New
       : isDict ? dict.subDict(name).lookup("type")
       : dict.lookup<word>(name);
 
-    const dictionary& coeffsDict =
+    const dictionary& coeffDict =
         isType ? dict
       : isDict ? dict.subDict(name)
       : dict.optionalSubDict(name + "Coeffs");
@@ -78,15 +78,15 @@ Foam::saturationPressureModel::New
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalErrorInFunction
+        FatalIOErrorInFunction(dict)
             << "Unknown " << typeName << " << type "
             << modelTypeName << endl << endl
             << "Valid " << typeName << " types are : " << endl
             << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
+            << exit(FatalIOError);
     }
 
-    return cstrIter()(coeffsDict);
+    return cstrIter()(coeffDict);
 }
 
 

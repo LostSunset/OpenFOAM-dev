@@ -41,11 +41,30 @@ namespace fv
 }
 
 
+const Foam::wordList Foam::fv::codedFvModel::codeKeys
+{
+    "codeAddSup",
+    "codeAddRhoSup",
+    "codeAddAlphaRhoSup",
+    "codeInclude",
+    "localCode"
+};
+
+const Foam::wordList Foam::fv::codedFvModel::codeDictVars
+{
+    word::null,
+    word::null,
+    word::null,
+    word::null,
+    word::null
+};
+
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::fv::codedFvModel::readCoeffs()
+void Foam::fv::codedFvModel::readCoeffs(const dictionary& dict)
 {
-    fieldName_ = coeffs().lookup<word>("field");
+    fieldName_ = dict.lookup<word>("field");
 }
 
 
@@ -101,43 +120,13 @@ void Foam::fv::codedFvModel::prepare
 }
 
 
-void Foam::fv::codedFvModel::clearRedirect() const
-{
-    redirectFvModelPtr_.clear();
-}
-
-
-Foam::wordList Foam::fv::codedFvModel::codeKeys() const
-{
-    return
-    {
-        "codeAddSup",
-        "codeAddRhoSup",
-        "codeAddAlphaRhoSup",
-        "codeInclude",
-        "localCode"
-    };
-}
-
-
-Foam::wordList Foam::fv::codedFvModel::codeDictVars() const
-{
-    return
-    {
-        word::null,
-        word::null,
-        word::null,
-        word::null,
-        word::null
-    };
-}
-
-
 Foam::fvModel& Foam::fv::codedFvModel::redirectFvModel() const
 {
     if (!redirectFvModelPtr_.valid())
     {
-        dictionary constructDict(coeffs());
+        updateLibrary(coeffsDict_);
+
+        dictionary constructDict(coeffsDict_);
         constructDict.set("type", name());
         redirectFvModelPtr_ = fvModel::New
         (
@@ -146,6 +135,7 @@ Foam::fvModel& Foam::fv::codedFvModel::redirectFvModel() const
             constructDict
         );
     }
+
     return redirectFvModelPtr_();
 }
 
@@ -221,14 +211,11 @@ Foam::fv::codedFvModel::codedFvModel
 )
 :
     fvModel(name, modelType, mesh, dict),
-    codedBase(name, coeffs()),
-    fieldName_(word::null)
+    codedBase(name, coeffs(dict), codeKeys, codeDictVars),
+    fieldName_(word::null),
+    coeffsDict_(coeffs(dict))
 {
-    readCoeffs();
-    if (fieldPrimitiveTypeName() != word::null)
-    {
-        updateLibrary(coeffs());
-    }
+    readCoeffs(coeffsDict_);
 }
 
 
@@ -281,11 +268,11 @@ bool Foam::fv::codedFvModel::read(const dictionary& dict)
 {
     if (fvModel::read(dict))
     {
-        readCoeffs();
-        if (fieldPrimitiveTypeName() != word::null)
-        {
-            updateLibrary(coeffs());
-        }
+        redirectFvModelPtr_.clear();
+        coeffsDict_ = coeffs(dict);
+        readCoeffs(coeffsDict_);
+        codedBase::read(coeffsDict_);
+        updateLibrary(coeffsDict_);
         return true;
     }
     else

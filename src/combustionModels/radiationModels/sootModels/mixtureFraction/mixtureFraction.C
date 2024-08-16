@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2013-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2013-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -58,7 +58,7 @@ Foam::radiationModels::sootModels::mixtureFraction::mixtureFraction
     const word& modelType
 )
 :
-    sootModel(dict, mesh, modelType),
+    sootModel(mesh, modelType),
     soot_
     (
         IOobject
@@ -71,13 +71,12 @@ Foam::radiationModels::sootModels::mixtureFraction::mixtureFraction
         ),
         mesh_
     ),
-    coeffsDict_(dict.subOrEmptyDict(modelType + "Coeffs")),
-    nuSoot_(coeffsDict_.lookup<scalar>("nuSoot")),
-    Wsoot_(coeffsDict_.lookup<scalar>("Wsoot")),
+    nuSoot_(dict.lookup<scalar>("nuSoot")),
+    Wsoot_(dict.lookup<scalar>("Wsoot")),
     sootMax_(-1),
     mappingFieldName_
     (
-        coeffsDict_.lookupOrDefault<word>("mappingField", "none")
+        dict.lookupOrDefault<word>("mappingField", "none")
     ),
     mapFieldMax_(1)
 {

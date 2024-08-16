@@ -255,14 +255,9 @@ public:
 
         // Protected member data
 
-            //- Coefficients dictionary
-            dictionary dict_;
-
-
-        // Protected Data
-
             //- Reference to engine mesh mover
             const multiValveEngine& meshMover_;
+
 
     public:
 
@@ -279,6 +274,9 @@ public:
 
             //- Piston motion function
             autoPtr<Function1<scalar>> motion_;
+
+            //- Object patchNames
+            wordReList patchNames_;
 
             //- Object patchSet
             labelHashSet patchSet_;
@@ -530,9 +528,15 @@ private:
     // Private member data
 
         //- User-defined liner patches
+        wordReList linerPatches_;
+
+        //- User-defined liner patch set
         labelHashSet linerPatchSet_;
 
         //- User-defined patches which the mesh can slide along
+        wordReList slidingPatches_;
+
+        //- User-defined patch set which the mesh can slide along
         labelHashSet slidingPatchSet_;
 
         //- Piston object
@@ -588,7 +592,7 @@ public:
     // Constructors
 
         //- Construct from fvMesh
-        multiValveEngine(fvMesh& mesh);
+        multiValveEngine(fvMesh& mesh, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         multiValveEngine(const multiValveEngine&) = delete;

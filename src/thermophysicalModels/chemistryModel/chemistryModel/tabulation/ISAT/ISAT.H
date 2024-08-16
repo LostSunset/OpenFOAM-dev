@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2016-2022 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2016-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -63,8 +63,6 @@ class ISAT
     public chemistryTabulationMethod
 {
     // Private Data
-
-        const dictionary coeffsDict_;
 
         const odeChemistryModel& chemistry_;
 
@@ -204,6 +202,17 @@ class ISAT
             const scalarField& Rphiq,
             const label li,
             const scalar dt
+        );
+
+
+    // Private constructors
+
+        //- Construct from dictionary and coefficient dictionary
+        ISAT
+        (
+            const dictionary& chemistryProperties,
+            const dictionary& coeffDict,
+            const odeChemistryModel& chemistry
         );
 
 

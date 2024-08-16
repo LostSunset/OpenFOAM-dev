@@ -138,7 +138,12 @@ Foam::mappedValueFvPatchField<Type>::mappedValueFvPatchField
     mapperPtr_
     (
         mappedPatchBase::specified(dict)
-      ? new mappedPatchBase(p.patch(), dict, false)
+      ? new mappedPatchBase
+        (
+            p.patch(),
+            dict,
+            mappedPatchBase::transformType::specified
+        )
       : nullptr
     )
 {
@@ -224,7 +229,7 @@ void Foam::mappedValueFvPatchField<Type>::map
 
     if (mapperPtr_.valid())
     {
-        mapperPtr_->clearOut();
+        mapperPtr_->clearOut(false);
     }
 }
 
@@ -239,7 +244,7 @@ void Foam::mappedValueFvPatchField<Type>::reset
 
     if (mapperPtr_.valid())
     {
-        mapperPtr_->clearOut();
+        mapperPtr_->clearOut(false);
     }
 }
 

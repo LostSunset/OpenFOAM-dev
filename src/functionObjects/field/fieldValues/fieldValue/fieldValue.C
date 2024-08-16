@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -51,9 +51,8 @@ Foam::functionObjects::fieldValue::fieldValue
 :
     fvMeshFunctionObject(name, runTime, dict),
     logFiles(obr_, name),
-    dict_(dict),
     valueType_(valueType),
-    resultDict_(fileName("result"), dictionary::null)
+    resultDict_("result")
 {
     read(dict);
 }
@@ -67,11 +66,10 @@ Foam::functionObjects::fieldValue::fieldValue
     const word& valueType
 )
 :
-    fvMeshFunctionObject(name, obr, dict),
+    fvMeshFunctionObject(name, obr),
     logFiles(obr_, name),
-    dict_(dict),
     valueType_(valueType),
-    resultDict_(fileName("result"), dictionary::null)
+    resultDict_("result")
 {
     read(dict);
 }
@@ -87,11 +85,6 @@ Foam::functionObjects::fieldValue::~fieldValue()
 
 bool Foam::functionObjects::fieldValue::read(const dictionary& dict)
 {
-    if (dict != dict_)
-    {
-        dict_ = dict;
-    }
-
     fvMeshFunctionObject::read(dict);
 
     dict.lookup("fields") >> fields_;

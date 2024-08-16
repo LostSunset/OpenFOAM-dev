@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2016-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2016-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -30,7 +30,7 @@ License
 template<class ThermoType>
 Foam::chemistryReductionMethods::DAC<ThermoType>::DAC
 (
-    const IOdictionary& dict,
+    const dictionary& dict,
     chemistryModel<ThermoType>& chemistry
 )
 :
@@ -87,34 +87,34 @@ Foam::chemistryReductionMethods::DAC<ThermoType>::DAC
     ),
     forceFuelInclusion_(false)
 {
-    const wordHashSet initSet(this->coeffsDict_.lookup("initialSet"));
+    const wordHashSet initSet(this->coeffDict(dict).lookup("initialSet"));
     forAllConstIter(wordHashSet, initSet, iter)
     {
         searchInitSet_.append(chemistry.thermo().species()[iter.key()]);
     }
 
-    if (this->coeffsDict_.found("automaticSIS"))
+    if (this->coeffDict(dict).found("automaticSIS"))
     {
-        automaticSIS_.readIfPresent("automaticSIS", this->coeffsDict_);
+        automaticSIS_.readIfPresent("automaticSIS", this->coeffDict(dict));
     }
 
-    if (this->coeffsDict_.found("forceFuelInclusion"))
+    if (this->coeffDict(dict).found("forceFuelInclusion"))
     {
         forceFuelInclusion_.readIfPresent
         (
-            "forceFuelInclusion",this->coeffsDict_
+            "forceFuelInclusion",this->coeffDict(dict)
         );
     }
 
-    if (this->coeffsDict_.found("phiTol"))
+    if (this->coeffDict(dict).found("phiTol"))
     {
-        phiTol_ = this->coeffsDict_.template lookup<scalar>("phiTol");
+        phiTol_ = this->coeffDict(dict).template lookup<scalar>("phiTol");
     }
 
-    if (this->coeffsDict_.found("NOxThreshold"))
+    if (this->coeffDict(dict).found("NOxThreshold"))
     {
         NOxThreshold_ =
-            this->coeffsDict_.template lookup<scalar>("NOxThreshold");
+            this->coeffDict(dict).template lookup<scalar>("NOxThreshold");
     }
 
     for (label i=0; i<this->nSpecie(); i++)
@@ -185,7 +185,7 @@ Foam::chemistryReductionMethods::DAC<ThermoType>::DAC
     {
         List<Tuple2<word, scalar>> fuelSpeciesEntry
         (
-            this->coeffsDict_.lookup("fuelSpecies")
+            this->coeffDict(dict).lookup("fuelSpecies")
         );
 
         fuelSpecies_.setSize(fuelSpeciesEntry.size());
@@ -204,7 +204,7 @@ Foam::chemistryReductionMethods::DAC<ThermoType>::DAC
             Mmtot += fuelSpeciesProp_[i]/curMm;
         }
 
-        this->coeffsDict_.readIfPresent("nbCLarge", nbCLarge_);
+        this->coeffDict(dict).readIfPresent("nbCLarge", nbCLarge_);
 
         Mmtot = 1.0/Mmtot;
         scalar nbC(0.0);

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2013-2022 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2013-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -65,8 +65,6 @@ class RaviPetersen
 {
     // Private Data
 
-        dictionary coeffsDict_;
-
         //- Correlation pressure values
         List<scalar> pPoints_;
 
@@ -88,6 +86,7 @@ class RaviPetersen
         //- Check that input points are ordered
         void checkPointsMonotonicity
         (
+            const dictionary& coeffDict,
             const word& name,
             const List<scalar>& x
         ) const;
@@ -95,6 +94,7 @@ class RaviPetersen
         //- Check that the coefficient arrays are of the correct shape
         void checkCoefficientArrayShape
         (
+            const dictionary& coeffDict,
             const word& name,
             const List<List<List<scalar>>>& x
         ) const;
@@ -171,7 +171,8 @@ public:
         //- Construct from dictionary and psiuMulticomponentThermo
         RaviPetersen
         (
-            const dictionary&,
+            const dictionary& dict,
+            const dictionary& coeffDict,
             const psiuMulticomponentThermo&
         );
 

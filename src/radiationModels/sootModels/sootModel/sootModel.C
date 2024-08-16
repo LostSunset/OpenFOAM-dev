@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2013-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2013-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -40,12 +40,10 @@ namespace radiationModels
 
 Foam::radiationModels::sootModel::sootModel
 (
-    const dictionary& dict,
     const fvMesh& mesh,
     const word& modelType
 )
 :
-    dict_(dict),
     mesh_(mesh)
 {}
 

@@ -38,25 +38,25 @@ Foam::autoPtr<Foam::Function2<Type>> Foam::Function2<Type>::New
     // If the function is a dictionary (preferred) then read straightforwardly
     if (dict.isDict(name))
     {
-        const dictionary& coeffsDict(dict.subDict(name));
+        const dictionary& coeffDict(dict.subDict(name));
 
-        const word Function2Type(coeffsDict.lookup("type"));
+        const word Function2Type(coeffDict.lookup("type"));
 
         typename dictionaryConstructorTable::iterator cstrIter =
             dictionaryConstructorTablePtr_->find(Function2Type);
 
         if (cstrIter == dictionaryConstructorTablePtr_->end())
         {
-            FatalErrorInFunction
+            FatalIOErrorInFunction(dict)
                 << "Unknown Function2 type "
                 << Function2Type << " for Function2 "
                 << name << nl << nl
                 << "Valid Function2 types are:" << nl
                 << dictionaryConstructorTablePtr_->sortedToc() << nl
-                << exit(FatalError);
+                << exit(FatalIOError);
         }
 
-        return cstrIter()(name, units, coeffsDict);
+        return cstrIter()(name, units, coeffDict);
     }
 
     // Find the entry
@@ -83,13 +83,13 @@ Foam::autoPtr<Foam::Function2<Type>> Foam::Function2<Type>::New
 
     if (dictCstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalErrorInFunction
+        FatalIOErrorInFunction(dict)
             << "Unknown Function2 type "
             << Function2Type << " for Function2 "
             << name << nl << nl
             << "Valid Function2 types are:" << nl
             << dictionaryConstructorTablePtr_->sortedToc() << nl
-            << exit(FatalError);
+            << exit(FatalIOError);
     }
 
     return dictCstrIter()(name, units, dict);

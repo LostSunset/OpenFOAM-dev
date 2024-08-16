@@ -28,21 +28,22 @@ License
 #include "dynamicCodeContext.H"
 #include "addToRunTimeSelectionTable.H"
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+template<class Type>
+const Foam::wordList Foam::codedFixedValueFvPatchField<Type>::codeKeys
+(
+    {"code", "codeInclude", "localCode"}
+);
+
+template<class Type>
+const Foam::wordList Foam::codedFixedValueFvPatchField<Type>::codeDictVars
+(
+    {word::null, word::null, word::null}
+);
+
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-template<class Type>
-Foam::wordList Foam::codedFixedValueFvPatchField<Type>::codeKeys() const
-{
-    return {"code", "codeInclude", "localCode"};
-}
-
-
-template<class Type>
-Foam::wordList Foam::codedFixedValueFvPatchField<Type>::codeDictVars() const
-{
-    return {word::null, word::null, word::null};
-}
-
 
 template<class Type>
 void Foam::codedFixedValueFvPatchField<Type>::prepare
@@ -92,14 +93,6 @@ void Foam::codedFixedValueFvPatchField<Type>::prepare
 }
 
 
-template<class Type>
-void Foam::codedFixedValueFvPatchField<Type>::clearRedirect() const
-{
-    // Remove instantiation of fvPatchField provided by library
-    redirectPatchFieldPtr_.clear();
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -111,9 +104,11 @@ Foam::codedFixedValueFvPatchField<Type>::codedFixedValueFvPatchField
 )
 :
     fixedValueFvPatchField<Type>(p, iF, dict),
-    codedBase(dict),
-    redirectPatchFieldPtr_()
-{}
+    codedBase(dict, codeKeys, codeDictVars)
+{
+    // Compile the library containing user-defined fvPatchField
+    updateLibrary(dict);
+}
 
 
 template<class Type>
@@ -126,8 +121,7 @@ Foam::codedFixedValueFvPatchField<Type>::codedFixedValueFvPatchField
 )
 :
     fixedValueFvPatchField<Type>(ptf, p, iF, mapper),
-    codedBase(ptf),
-    redirectPatchFieldPtr_()
+    codedBase(ptf)
 {}
 
 
@@ -139,8 +133,7 @@ Foam::codedFixedValueFvPatchField<Type>::codedFixedValueFvPatchField
 )
 :
     fixedValueFvPatchField<Type>(ptf, iF),
-    codedBase(ptf),
-    redirectPatchFieldPtr_()
+    codedBase(ptf)
 {}
 
 
@@ -152,9 +145,6 @@ Foam::codedFixedValueFvPatchField<Type>::redirectPatchField() const
 {
     if (!redirectPatchFieldPtr_.valid())
     {
-        // Make sure library containing user-defined fvPatchField is up-to-date
-        updateLibrary();
-
         OStringStream os;
         writeEntry(os, "type", codeName());
 
@@ -220,7 +210,7 @@ template<class Type>
 void Foam::codedFixedValueFvPatchField<Type>::write(Ostream& os) const
 {
     fixedValueFvPatchField<Type>::write(os);
-    writeCode(os);
+    codedBase::write(os);
 }
 
 

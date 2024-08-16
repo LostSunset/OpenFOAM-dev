@@ -90,25 +90,25 @@ class codedFunctionObject
 {
     // Private Data
 
+        //- Keywords associated with source code
+        static const wordList codeKeys;
+
+        //- Name of the dictionary variables in the source code
+        static const wordList codeDictVars;
+
         //- The dynamically generated functionObject pointer
         mutable autoPtr<functionObject> redirectFunctionObjectPtr_;
 
 
     // Private Member Functions
 
-        //- Get the keywords associated with source code
-        virtual wordList codeKeys() const;
-
-        //- Get the name of the dictionary variables in the source code
-        virtual wordList codeDictVars() const;
-
         //- Adapt the context for the current object
         virtual void prepare(dynamicCode&, const dynamicCodeContext&) const;
 
-        //- Clear any redirected objects
-        virtual void clearRedirect() const;
+        //- Compile, link and load the compiled functionObject
+        void updateLibrary(const dictionary& dict);
 
-        //- Compile, link and return the now coded functionObject
+        //- Return the compiled functionObject
         functionObject& redirectFunctionObject() const;
 
 

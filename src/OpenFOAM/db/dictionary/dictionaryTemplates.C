@@ -178,12 +178,11 @@ template<class T>
 T Foam::dictionary::lookupOrDefault
 (
     const word& keyword,
-    const T& deflt,
-    bool recursive,
-    bool patternMatch
+    const T& defaultValue,
+    const bool writeDefault
 ) const
 {
-    const entry* entryPtr = lookupEntryPtr(keyword, recursive, patternMatch);
+    const entry* entryPtr = lookupEntryPtr(keyword, false, false);
 
     if (entryPtr)
     {
@@ -191,15 +190,14 @@ T Foam::dictionary::lookupOrDefault
     }
     else
     {
-        if (writeOptionalEntries)
+        if (writeDefault)
         {
-            IOInfoInFunction(*this)
-                << "Optional entry '" << keyword << "' is not present,"
-                << " returning the default value '" << deflt << "'"
-                << endl;
+            Info<< indent << "Default: " << keyword
+                << " " << defaultValue
+                << " in " << name().relativePath() << endl;
         }
 
-        return deflt;
+        return defaultValue;
     }
 }
 
@@ -209,12 +207,11 @@ T Foam::dictionary::lookupOrDefault
 (
     const word& keyword,
     const unitConversion& defaultUnits,
-    const T& deflt,
-    bool recursive,
-    bool patternMatch
+    const T& defaultValue,
+    const bool writeDefault
 ) const
 {
-    const entry* entryPtr = lookupEntryPtr(keyword, recursive, patternMatch);
+    const entry* entryPtr = lookupEntryPtr(keyword, false, false);
 
     if (entryPtr)
     {
@@ -222,15 +219,14 @@ T Foam::dictionary::lookupOrDefault
     }
     else
     {
-        if (writeOptionalEntries)
+        if (writeDefault)
         {
-            IOInfoInFunction(*this)
-                << "Optional entry '" << keyword << "' is not present,"
-                << " returning the default value '" << deflt << "'"
-                << endl;
+            Info<< indent << "Default: " << keyword
+                << " " << defaultValue
+                << " in " << name().relativePath() << endl;
         }
 
-        return deflt;
+        return defaultValue;
     }
 }
 
@@ -239,13 +235,11 @@ template<class T>
 T Foam::dictionary::lookupOrDefaultBackwardsCompatible
 (
     const wordList& keywords,
-    const T& deflt,
-    bool recursive,
-    bool patternMatch
+    const T& defaultValue
 ) const
 {
     const entry* entryPtr =
-        lookupEntryPtrBackwardsCompatible(keywords, recursive, patternMatch);
+        lookupEntryPtrBackwardsCompatible(keywords, false, false);
 
     if (entryPtr)
     {
@@ -254,7 +248,7 @@ T Foam::dictionary::lookupOrDefaultBackwardsCompatible
     else
     {
         // Generate debugging messages using the first keyword
-        return lookupOrDefault<T>(keywords[0], deflt, recursive, patternMatch);
+        return lookupOrDefault<T>(keywords[0], defaultValue);
     }
 }
 
@@ -264,13 +258,11 @@ T Foam::dictionary::lookupOrDefaultBackwardsCompatible
 (
     const wordList& keywords,
     const unitConversion& defaultUnits,
-    const T& deflt,
-    bool recursive,
-    bool patternMatch
+    const T& defaultValue
 ) const
 {
     const entry* entryPtr =
-        lookupEntryPtrBackwardsCompatible(keywords, recursive, patternMatch);
+        lookupEntryPtrBackwardsCompatible(keywords, false, false);
 
     if (entryPtr)
     {
@@ -280,7 +272,7 @@ T Foam::dictionary::lookupOrDefaultBackwardsCompatible
     else
     {
         // Generate debugging messages using the first keyword
-        return lookupOrDefault<T>(keywords[0], deflt, recursive, patternMatch);
+        return lookupOrDefault<T>(keywords[0], defaultValue);
     }
 }
 
@@ -289,12 +281,10 @@ template<class T>
 T Foam::dictionary::lookupOrAddDefault
 (
     const word& keyword,
-    const T& deflt,
-    bool recursive,
-    bool patternMatch
+    const T& defaultValue
 )
 {
-    const entry* entryPtr = lookupEntryPtr(keyword, recursive, patternMatch);
+    const entry* entryPtr = lookupEntryPtr(keyword, false, false);
 
     if (entryPtr)
     {
@@ -302,16 +292,15 @@ T Foam::dictionary::lookupOrAddDefault
     }
     else
     {
-        if (writeOptionalEntries)
+        if (writeOptionalEntries > 1)
         {
-            IOInfoInFunction(*this)
-                << "Optional entry '" << keyword << "' is not present,"
-                << " adding and returning the default value '" << deflt << "'"
-                << endl;
+            Info<< indent << "Added default: " << keyword
+                << " " << defaultValue
+                << " to " << name().relativePath() << endl;
         }
 
-        add(new primitiveEntry(keyword, deflt));
-        return deflt;
+        add(new primitiveEntry(keyword, defaultValue));
+        return defaultValue;
     }
 }
 
@@ -334,12 +323,11 @@ bool Foam::dictionary::readIfPresent
     }
     else
     {
-        if (writeOptionalEntries)
+        if (writeOptionalEntries > 1)
         {
-            IOInfoInFunction(*this)
-                << "Optional entry '" << keyword << "' is not present,"
-                << " the default value '" << val << "' will be used."
-                << endl;
+            Info<< indent << "Default: " << keyword
+                << " " << val
+                << " in " << name().relativePath() << endl;
         }
 
         return false;
@@ -366,12 +354,11 @@ bool Foam::dictionary::readIfPresent
     }
     else
     {
-        if (writeOptionalEntries)
+        if (writeOptionalEntries > 1)
         {
-            IOInfoInFunction(*this)
-                << "Optional entry '" << keyword << "' is not present,"
-                << " the default value '" << val << "' will be used."
-                << endl;
+            Info<< indent << "Default: " << keyword
+                << " " << val
+                << " in " << name().relativePath() << endl;
         }
 
         return false;

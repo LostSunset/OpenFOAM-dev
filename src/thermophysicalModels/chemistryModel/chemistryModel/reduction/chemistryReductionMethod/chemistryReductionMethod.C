@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2021-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2021-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -34,7 +34,6 @@ Foam::chemistryReductionMethod<ThermoType>::chemistryReductionMethod
     Foam::chemistryModel<ThermoType>& chemistry
 )
 :
-    coeffsDict_(),
     chemistry_(chemistry),
     nSpecie_(chemistry.nSpecie()),
     nActiveSpecies_(chemistry.nSpecie()),
@@ -51,18 +50,23 @@ Foam::chemistryReductionMethod<ThermoType>::chemistryReductionMethod
 template<class ThermoType>
 Foam::chemistryReductionMethod<ThermoType>::chemistryReductionMethod
 (
-    const Foam::IOdictionary& dict,
+    const Foam::dictionary& dict,
     Foam::chemistryModel<ThermoType>& chemistry
 )
 :
-    coeffsDict_(dict.subDict("reduction")),
     chemistry_(chemistry),
     nSpecie_(chemistry.nSpecie()),
     nActiveSpecies_(chemistry.nSpecie()),
     reactionsDisabled_(chemistry.nReaction(), false),
     activeSpecies_(chemistry.nSpecie(), false),
-    log_(coeffsDict_.lookupOrDefault<Switch>("log", false)),
-    tolerance_(coeffsDict_.lookupOrDefault<scalar>("tolerance", 1e-4)),
+    log_
+    (
+        coeffDict(dict).template lookupOrDefault<Switch>("log", false)
+    ),
+    tolerance_
+    (
+        coeffDict(dict).template lookupOrDefault<scalar>("tolerance", 1e-4)
+    ),
     sumnActiveSpecies_(0),
     sumn_(0),
     reduceMechCpuTime_(0)

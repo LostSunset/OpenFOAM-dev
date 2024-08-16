@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -57,9 +57,6 @@ protected:
 
     // Protected data
 
-        //- Radiation model dictionary
-        const dictionary dict_;
-
         //- Reference to the fvMesh
         const fvMesh& mesh_;
 
@@ -86,12 +83,8 @@ public:
 
     // Constructors
 
-        //- Construct from components
-        absorptionEmissionModel
-        (
-            const dictionary& dict,
-            const fvMesh& mesh
-        );
+        //- Construct from mesh
+        absorptionEmissionModel(const fvMesh& mesh);
 
 
     //- Selector
@@ -114,12 +107,6 @@ public:
             inline const fvMesh& mesh() const
             {
                 return mesh_;
-            }
-
-            //- Reference to the dictionary
-            inline const dictionary& dict() const
-            {
-                return dict_;
             }
 
 

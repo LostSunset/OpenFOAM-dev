@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2013-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2013-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -81,9 +81,6 @@ class mixtureFraction
 
          //- Soot mass fraction
         volScalarField soot_;
-
-        //- Soot model dictionary
-        dictionary coeffsDict_;
 
         //- Soot yield
         scalar nuSoot_;

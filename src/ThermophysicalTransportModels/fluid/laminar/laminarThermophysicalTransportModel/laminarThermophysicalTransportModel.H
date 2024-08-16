@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2020-2022 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2020-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -54,22 +54,10 @@ class laminarThermophysicalTransportModel
 
 protected:
 
-    // Protected data
+    // Protected member functions
 
-        //- laminar coefficients dictionary
-        dictionary laminarDict_;
-
-        //- Flag to print the model coeffs at run-time
-        Switch printCoeffs_;
-
-        //- Model coefficients dictionary
-        dictionary coeffDict_;
-
-
-    // Protected Member Functions
-
-        //- Print model coefficients
-        virtual void printCoeffs(const word& type);
+        //- Const access to the coefficients dictionary
+        const dictionary& coeffDict() const;
 
 
 public:
@@ -139,12 +127,6 @@ public:
 
         //- Read model coefficients if they have changed
         virtual bool read();
-
-        //- Const access to the coefficients dictionary
-        virtual const dictionary& coeffDict() const
-        {
-            return coeffDict_;
-        }
 
         //- Effective thermal turbulent conductivity
         //  of mixture [W/m/K]

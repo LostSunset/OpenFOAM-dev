@@ -89,13 +89,29 @@ Foam::tmp<Foam::pointField> Foam::mappedPatchBase::nbrPatchLocalPoints() const
 }
 
 
+bool Foam::mappedPatchBase::mappingIsValid() const
+{
+    const label bothMappingIsValid =
+        nbrPatchIsMapped()
+      ? min(mappingIsValid_, nbrMappedPatch().nbrMappingIsValid_)
+      : mappingIsValid_;
+
+    return
+        (bothMappingIsValid == 2)
+     || (
+            bothMappingIsValid == 1
+         && !mappedPatchBase::moving
+            (
+                patch_,
+                nbrPolyPatch()
+            )
+        );
+}
+
+
 void Foam::mappedPatchBase::calcMapping() const
 {
-    if (treeMapPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "Mapping already calculated" << exit(FatalError);
-    }
+    clearOut();
 
     if (sameUntransformedPatch())
     {
@@ -223,18 +239,26 @@ void Foam::mappedPatchBase::calcMapping() const
                 }
             }
 
-            // If any points were not found within cells then re-search for
-            // them using a nearest test, which should not fail. Warn that this
-            // is happening. If any points were not found for some other
-            // method, then fail.
+            // If any points were not found then fail
             if (nNotFound)
             {
                 FatalErrorInFunction
-                    << "Mapping failed for " << nl
-                    << "    patch: " << patch_.name() << nl
-                    << "    neighbourRegion: " << nbrRegionName() << nl
-                    << "    neighbourPatch: " << nbrPatchName() << nl
-                    << exit(FatalError);
+                    << "Mapping to patch '" << patch_.name();
+                if (!sameRegion())
+                {
+                    FatalErrorInFunction
+                        << "' in region '"
+                        << patch_.boundaryMesh().mesh().name();
+                }
+                FatalErrorInFunction
+                    << "' from patch '" << nbrPatchName();
+                if (!sameRegion())
+                {
+                    FatalErrorInFunction
+                        << "' in region '" << nbrRegionName();
+                }
+                FatalErrorInFunction
+                    << "' failed " << exit(FatalError);
             }
 
             // Build lists of samples
@@ -285,12 +309,6 @@ void Foam::mappedPatchBase::calcMapping() const
     }
     else
     {
-        if (patchToPatchIsValid_)
-        {
-            FatalErrorInFunction
-                << "Patch-to-patch already calculated" << exit(FatalError);
-        }
-
         const pointField patchLocalPoints(this->patchLocalPoints());
         const pointField nbrPatchLocalPoints(this->nbrPatchLocalPoints());
 
@@ -313,8 +331,71 @@ void Foam::mappedPatchBase::calcMapping() const
             transform_.transform()
         );
 
-        patchToPatchIsValid_ = true;
+        // Check the validity of the mapping. Every face must be coupled.
+        auto checkPatchToPatch = [&]
+        (
+            const polyPatch& patch,
+            const polyPatch& nbrPatch,
+            const bool isSrc
+        )
+        {
+            const PackedBoolList coupled =
+                isSrc
+              ? patchToPatchPtr_->srcCoupled()
+              : patchToPatchPtr_->tgtCoupled();
+
+            DynamicList<point> nonCoupledCfs;
+            forAll(coupled, patchFacei)
+            {
+                if (!coupled[patchFacei])
+                {
+                    nonCoupledCfs.append(patch.faceCentres()[patchFacei]);
+                }
+            }
+
+            if (nonCoupledCfs.size())
+            {
+                FatalErrorInFunction
+                    << "Mapping to patch '" << patch.name();
+                if (!sameRegion())
+                {
+                    FatalErrorInFunction
+                        << "' in region '"
+                        << patch.boundaryMesh().mesh().name();
+                }
+                FatalErrorInFunction
+                    << "' from patch '" << nbrPatch.name();
+                if (!sameRegion())
+                {
+                    FatalErrorInFunction
+                        << "' in region '"
+                        << nbrPatch.boundaryMesh().mesh().name();
+                }
+                FatalErrorInFunction
+                    << "' failed because faces at the following locations "
+                    << "were not coupled: " << nonCoupledCfs
+                    << exit(FatalError);
+            }
+        };
+
+        checkPatchToPatch(patch_, nbrPolyPatch(), true);
+
+        if (symmetric())
+        {
+            checkPatchToPatch(nbrPolyPatch(), patch_, false);
+        }
     }
+
+    mappingIsValid_ = 2;
+
+    if (nbrPatchIsMapped()) nbrMappedPatch().nbrMappingIsValid_ = 2;
+}
+
+
+void Foam::mappedPatchBase::clearOut() const
+{
+    treeMapPtr_.clear();
+    treeNbrPatchFaceIndices_.clear();
 }
 
 
@@ -326,11 +407,10 @@ Foam::mappedPatchBase::mappedPatchBase(const polyPatch& pp)
     usingTree_(true),
     treeMapPtr_(nullptr),
     treeNbrPatchFaceIndices_(),
-    patchToPatchIsValid_(false),
     patchToPatchPtr_(nullptr),
     matchTol_(defaultMatchTol_),
-    reMapAfterMove_(true),
-    reMapNbr_(false)
+    mappingIsValid_(0),
+    nbrMappingIsValid_(0)
 {}
 
 
@@ -346,11 +426,10 @@ Foam::mappedPatchBase::mappedPatchBase
     usingTree_(true),
     treeMapPtr_(nullptr),
     treeNbrPatchFaceIndices_(),
-    patchToPatchIsValid_(false),
     patchToPatchPtr_(nullptr),
     matchTol_(defaultMatchTol_),
-    reMapAfterMove_(true),
-    reMapNbr_(false)
+    mappingIsValid_(0),
+    nbrMappingIsValid_(0)
 {}
 
 
@@ -358,14 +437,13 @@ Foam::mappedPatchBase::mappedPatchBase
 (
     const polyPatch& pp,
     const dictionary& dict,
-    const bool defaultTransformIsNone
+    const transformType tt
 )
 :
-    mappedPatchBaseBase(pp, dict, defaultTransformIsNone),
+    mappedPatchBaseBase(pp, dict, tt),
     usingTree_(!dict.found("method") && !dict.found("sampleMode")),
     treeMapPtr_(nullptr),
     treeNbrPatchFaceIndices_(),
-    patchToPatchIsValid_(false),
     patchToPatchPtr_
     (
         !usingTree_
@@ -377,8 +455,8 @@ Foam::mappedPatchBase::mappedPatchBase
       : nullptr
     ),
     matchTol_(dict.lookupOrDefault("matchTolerance", defaultMatchTol_)),
-    reMapAfterMove_(dict.lookupOrDefault<bool>("reMapAfterMove", true)),
-    reMapNbr_(false)
+    mappingIsValid_(0),
+    nbrMappingIsValid_(0)
 {}
 
 
@@ -392,7 +470,6 @@ Foam::mappedPatchBase::mappedPatchBase
     usingTree_(mpb.usingTree_),
     treeMapPtr_(nullptr),
     treeNbrPatchFaceIndices_(),
-    patchToPatchIsValid_(false),
     patchToPatchPtr_
     (
         !usingTree_
@@ -400,8 +477,8 @@ Foam::mappedPatchBase::mappedPatchBase
       : nullptr
     ),
     matchTol_(mpb.matchTol_),
-    reMapAfterMove_(mpb.reMapAfterMove_),
-    reMapNbr_(false)
+    mappingIsValid_(0),
+    nbrMappingIsValid_(0)
 {}
 
 
@@ -429,14 +506,22 @@ const Foam::mappedPatchBase& Foam::mappedPatchBase::getMap
 }
 
 
-void Foam::mappedPatchBase::clearOut()
+void Foam::mappedPatchBase::clearOut(const bool move)
 {
-    if (reMapAfterMove_)
+    if (move && moveUpdate_ == moveUpdate::never)
     {
-        treeMapPtr_.clear();
-        treeNbrPatchFaceIndices_.clear();
-        patchToPatchIsValid_ = false;
-        reMapNbr_ = true;
+        // Do nothing
+    }
+    else if (move && moveUpdate_ == moveUpdate::detect)
+    {
+        mappingIsValid_ = min(mappingIsValid_, 1);
+        nbrMappingIsValid_ = min(nbrMappingIsValid_, 1);
+    }
+    else
+    {
+        clearOut();
+        mappingIsValid_ = 0;
+        nbrMappingIsValid_ = 0;
     }
 }
 
@@ -451,8 +536,6 @@ void Foam::mappedPatchBase::write(Ostream& os) const
     }
 
     writeEntryIfDifferent(os, "matchTolerance", defaultMatchTol_, matchTol_);
-
-    writeEntryIfDifferent<bool>(os, "reMapAfterMove", true, reMapAfterMove_);
 }
 
 

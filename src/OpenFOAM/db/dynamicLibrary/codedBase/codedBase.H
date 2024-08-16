@@ -35,7 +35,7 @@ SourceFiles
 #ifndef codedBase_H
 #define codedBase_H
 
-#include "dictionary.H"
+#include "dynamicCodeContext.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,8 +44,6 @@ namespace Foam
 
 // Forward declaration of classes
 class dynamicCode;
-class dynamicCodeContext;
-class dlLibraryTable;
 
 /*---------------------------------------------------------------------------*\
                           Class codedBase Declaration
@@ -58,8 +56,7 @@ class codedBase
         //- Name of the dynamically generated CodedType
         const word codeName_;
 
-        //- Dictionary contents for the CodedType
-        mutable dictionary dict_;
+        dynamicCodeContext codeContext_;
 
         //- Previously loaded library
         mutable fileName oldLibPath_;
@@ -89,40 +86,23 @@ class codedBase
             const dictionary& contextDict
         ) const;
 
+        verbatimString expandCodeString
+        (
+            const word& codeKey,
+            const word& codeDictVar,
+            const dictionary& dict
+        ) const;
+
         //- Create library based on the dynamicCodeContext
-        void createLibrary(dynamicCode&, const dynamicCodeContext&) const;
-
-
-protected:
-
-    // Protected Member Functions
-
-        //- Name of the dynamically generated CodedType
-        const word& codeName() const;
-
-        //- Return a description (type + name) for the output
-        string description() const;
-
-        //- Get the dictionary to initialise the codeContext
-        const dictionary& codeDict() const;
-
-        //- Update library as required
-        void updateLibrary() const;
-
-        //- Update library from given updated dictionary as required
-        void updateLibrary(const dictionary& dict) const;
-
-        //- Get the keywords associated with source code
-        virtual wordList codeKeys() const = 0;
-
-        //- Get the name of the dictionary variables in the source code
-        virtual wordList codeDictVars() const = 0;
+        void createLibrary
+        (
+            const dictionary& dict,
+            dynamicCode&,
+            const dynamicCodeContext&
+        ) const;
 
         //- Adapt the context for the current object
         virtual void prepare(dynamicCode&, const dynamicCodeContext&) const = 0;
-
-        //- Clear any redirected objects
-        virtual void clearRedirect() const = 0;
 
 
 public:
@@ -134,10 +114,21 @@ public:
     // Constructors
 
         //- Construct from name and dictionary
-        codedBase(const word& name, const dictionary& dict);
+        codedBase
+        (
+            const word& name,
+            const dictionary& dict,
+            const wordList& codeKeys,
+            const wordList& codeDictVars
+        );
 
         //- Construct from dictionary
-        codedBase(const dictionary& dict);
+        codedBase
+        (
+            const dictionary& dict,
+            const wordList& codeKeys,
+            const wordList& codeDictVars
+        );
 
         //- Copy constructor
         codedBase(const codedBase& cb);
@@ -147,19 +138,33 @@ public:
     virtual ~codedBase();
 
 
-    // Member Operators
-
-        //- Disallow default bitwise assignment
-        void operator=(const codedBase&) = delete;
-
-
     // Member Functions
+
+        //- Name of the dynamically generated CodedType
+        const word& codeName() const;
+
+        //- Return a description (type + name) for the output
+        string description() const;
 
         word codeTemplateC(const word& baseTypeName) const;
 
         word codeTemplateH(const word& baseTypeName) const;
 
-        virtual void writeCode(Ostream& os) const;
+        //- Update library from given updated dictionary as required
+        //  Returns true if the library was updated, otherwise false
+        bool updateLibrary(const dictionary& dict) const;
+
+        //- Read the dictionary and update the code
+        void read(const dictionary& dict);
+
+        //- Write the code for restart
+        void write(Ostream& os) const;
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const codedBase&) = delete;
 };
 
 

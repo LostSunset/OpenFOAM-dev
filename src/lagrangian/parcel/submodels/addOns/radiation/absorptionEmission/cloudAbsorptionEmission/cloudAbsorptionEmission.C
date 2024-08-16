@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -56,9 +56,8 @@ Foam::radiationModels::absorptionEmissionModels::cloud::cloud
     const fvMesh& mesh
 )
 :
-    absorptionEmissionModel(dict, mesh),
-    coeffsDict_(dict.subDict(typeName + "Coeffs")),
-    cloudNames_(coeffsDict_.lookup("cloudNames"))
+    absorptionEmissionModel(mesh),
+    cloudNames_(dict.lookup("cloudNames"))
 {}
 
 

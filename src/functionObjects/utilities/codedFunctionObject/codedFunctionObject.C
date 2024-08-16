@@ -48,39 +48,32 @@ namespace Foam
 }
 
 
+const Foam::wordList Foam::codedFunctionObject::codeKeys
+{
+    "codeData",
+    "codeEnd",
+    "codeExecute",
+    "codeInclude",
+    "codeRead",
+    "codeFields",
+    "codeWrite",
+    "localCode"
+};
+
+const Foam::wordList Foam::codedFunctionObject::codeDictVars
+{
+    word::null,
+    word::null,
+    word::null,
+    word::null,
+    "dict",
+    word::null,
+    word::null,
+    word::null,
+};
+
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-Foam::wordList Foam::codedFunctionObject::codeKeys() const
-{
-    return
-    {
-        "codeData",
-        "codeEnd",
-        "codeExecute",
-        "codeInclude",
-        "codeRead",
-        "codeFields",
-        "codeWrite",
-        "localCode"
-    };
-}
-
-
-Foam::wordList Foam::codedFunctionObject::codeDictVars() const
-{
-    return
-    {
-        word::null,
-        word::null,
-        word::null,
-        word::null,
-        "dict",
-        word::null,
-        word::null,
-        word::null,
-    };
-}
-
 
 void Foam::codedFunctionObject::prepare
 (
@@ -120,9 +113,21 @@ void Foam::codedFunctionObject::prepare
 }
 
 
-void Foam::codedFunctionObject::clearRedirect() const
+void Foam::codedFunctionObject::updateLibrary(const dictionary& dict)
 {
     redirectFunctionObjectPtr_.clear();
+
+    codedBase::updateLibrary(dict);
+
+    dictionary constructDict(dict);
+    constructDict.set("type", codeName());
+
+    redirectFunctionObjectPtr_ = functionObject::New
+    (
+        codeName(),
+        time_,
+        constructDict
+    );
 }
 
 
@@ -136,9 +141,9 @@ Foam::codedFunctionObject::codedFunctionObject
 )
 :
     functionObject(name, time),
-    codedBase(name, dict)
+    codedBase(name, dict, codeKeys, codeDictVars)
 {
-    read(dict);
+    updateLibrary(dict);
 }
 
 
@@ -154,16 +159,10 @@ Foam::functionObject& Foam::codedFunctionObject::redirectFunctionObject() const
 {
     if (!redirectFunctionObjectPtr_.valid())
     {
-        dictionary constructDict(codeDict());
-        constructDict.set("type", codeName());
-
-        redirectFunctionObjectPtr_ = functionObject::New
-        (
-            codeName(),
-            time_,
-            constructDict
-        );
+        FatalErrorInFunction
+            << "redirectFunctionObject not allocated" << exit(FatalError);
     }
+
     return redirectFunctionObjectPtr_();
 }
 
@@ -196,8 +195,9 @@ bool Foam::codedFunctionObject::read(const dictionary& dict)
 {
     if (functionObject::read(dict))
     {
+        codedBase::read(dict);
         updateLibrary(dict);
-        return redirectFunctionObject().read(dict);
+        return true;
     }
     else
     {

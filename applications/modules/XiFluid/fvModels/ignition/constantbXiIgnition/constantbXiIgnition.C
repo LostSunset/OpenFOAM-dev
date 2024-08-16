@@ -45,11 +45,11 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::fv::constantbXiIgnition::readCoeffs()
+void Foam::fv::constantbXiIgnition::readCoeffs(const dictionary& dict)
 {
-    start_ = coeffs().lookup<scalar>("start", mesh().time().userUnits());
-    duration_ = coeffs().lookup<scalar>("duration", mesh().time().userUnits());
-    strength_ = coeffs().lookup<scalar>("strength", dimless);
+    start_.read(dict, mesh().time().userUnits());
+    duration_.read(dict, mesh().time().userUnits());
+    strength_.read(dict);
 }
 
 
@@ -64,19 +64,20 @@ Foam::fv::constantbXiIgnition::constantbXiIgnition
 )
 :
     bXiIgnition(name, modelType, mesh, dict),
-    set_(mesh, coeffs()),
-    XiCorrModel_(XiCorrModel::New(mesh, coeffs()))
-{
-    readCoeffs();
-}
+    set_(mesh, dict),
+    XiCorrModel_(XiCorrModel::New(mesh, dict)),
+    start_("start", mesh().time().userUnits(), dict),
+    duration_("duration", mesh().time().userUnits(), dict),
+    strength_("strength", dimless, dict)
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::fv::constantbXiIgnition::igniting() const
 {
-    const scalar curTime = mesh().time().value();
-    const scalar deltaT = mesh().time().deltaTValue();
+    const dimensionedScalar curTime = mesh().time();
+    const dimensionedScalar deltaT = mesh().time().deltaT();
 
     return
     (
@@ -88,8 +89,8 @@ bool Foam::fv::constantbXiIgnition::igniting() const
 
 bool Foam::fv::constantbXiIgnition::ignited() const
 {
-    const scalar curTime = mesh().time().value();
-    const scalar deltaT = mesh().time().deltaTValue();
+    const dimensionedScalar curTime = mesh().time();
+    const dimensionedScalar deltaT = mesh().time().deltaT();
 
     return (curTime > start_ - 0.5*deltaT);
 }
@@ -116,11 +117,14 @@ void Foam::fv::constantbXiIgnition::addSup
 
     const labelUList cells = set_.cells();
 
+    const scalar strength = strength_.value();
+    const scalar duration = duration_.value();
+
     forAll(cells, i)
     {
         const label celli = cells[i];
         const scalar Vc = V[celli];
-        Sp[celli] -= Vc*rhou[celli]*strength_/(duration_*(b[celli] + 0.001));
+        Sp[celli] -= Vc*rhou[celli]*strength/(duration*(b[celli] + 0.001));
     }
 }
 
@@ -178,9 +182,9 @@ bool Foam::fv::constantbXiIgnition::read(const dictionary& dict)
 {
     if (fvModel::read(dict))
     {
-        set_.read(coeffs());
-        XiCorrModel_->read(coeffs());
-        readCoeffs();
+        set_.read(coeffs(dict));
+        XiCorrModel_->read(coeffs(dict));
+        readCoeffs(coeffs(dict));
         return true;
     }
     else

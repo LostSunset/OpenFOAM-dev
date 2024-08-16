@@ -38,7 +38,7 @@ namespace Foam
 
 const Foam::dictionary Foam::dictionary::null;
 
-bool Foam::dictionary::writeOptionalEntries
+int Foam::dictionary::writeOptionalEntries
 (
     Foam::debug::infoSwitch("writeOptionalEntries", 0)
 );
@@ -332,6 +332,17 @@ Foam::dictionary::dictionary(const fileName& name)
 
 Foam::dictionary::dictionary
 (
+    const word& name,
+    const dictionary& parentDict
+)
+:
+    dictionaryName(name),
+    parent_(parentDict)
+{}
+
+
+Foam::dictionary::dictionary
+(
     const dictionary& parentDict,
     const dictionary& dict
 )
@@ -356,10 +367,7 @@ Foam::dictionary::dictionary
 }
 
 
-Foam::dictionary::dictionary
-(
-    const dictionary& dict
-)
+Foam::dictionary::dictionary(const dictionary& dict)
 :
     dictionaryName(dict.name()),
     IDLList<entry>(dict, *this),
@@ -381,10 +389,7 @@ Foam::dictionary::dictionary
 }
 
 
-Foam::dictionary::dictionary
-(
-    const dictionary* dictPtr
-)
+Foam::dictionary::dictionary(const dictionary* dictPtr)
 :
     parent_(dictionary::null)
 {
@@ -890,7 +895,7 @@ const Foam::dictionary& Foam::dictionary::subDictBackwardsCompatible
 }
 
 
-Foam::dictionary Foam::dictionary::subOrEmptyDict
+const Foam::dictionary& Foam::dictionary::subOrEmptyDict
 (
     const word& keyword,
     const bool mustRead
@@ -908,7 +913,7 @@ Foam::dictionary Foam::dictionary::subOrEmptyDict
                 << exit(FatalIOError);
         }
 
-        return dictionary(*this, dictionary(name() + '/' + keyword));
+        return null;
     }
     else
     {
@@ -1206,6 +1211,15 @@ bool Foam::dictionary::remove(const word& Keyword)
 }
 
 
+void Foam::dictionary::remove(const wordList& Keywords)
+{
+    forAll(Keywords, i)
+    {
+        remove(Keywords[i]);
+    }
+}
+
+
 bool Foam::dictionary::changeKeyword
 (
     const keyType& oldKeyword,
@@ -1279,7 +1293,7 @@ bool Foam::dictionary::changeKeyword
 
     // Change name and HashTable, but leave DL-List untouched
     iter()->keyword() = newKeyword;
-    iter()->name() = name() + '/' + newKeyword;
+    iter()->name() = name() + '/' + string::validate<word>(newKeyword);
     hashedEntries_.erase(oldKeyword);
     hashedEntries_.insert(newKeyword, iter());
 
