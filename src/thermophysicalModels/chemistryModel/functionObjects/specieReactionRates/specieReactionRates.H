@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2016-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2016-2024 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -25,8 +25,21 @@ Class
     Foam::functionObjects::specieReactionRates
 
 Description
-    Writes the domain averaged reaction rates for each specie for each reaction
-    into the file \<timeDir\>/specieReactionRates.dat
+    Writes volume averaged reaction rates in [kg/m^3/s] for each specie and
+    each reaction into the file \<timeDir\>/specieReactionRates.dat
+
+    Example of function object specification:
+    \verbatim
+    specieReactionRates1
+    {
+        type            specieReactionRates;
+        libs            ("libchemistryModel.so");
+
+        select          all; // Or points, cellSet, cellZone
+
+        //phase         <phaseName>; // Optional name of the phase
+    }
+    \endverbatim
 
 See also
     Foam::functionObjects::fvMeshFunctionObject
@@ -64,6 +77,9 @@ class specieReactionRates
     public logFiles
 {
     // Private Member Data
+
+        //- Name of the phase
+        const word phaseName_;
 
         //- Reference to the chemistry model
         const basicChemistryModel& chemistryModel_;

@@ -22,103 +22,127 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::fv::bXiIgnition
+    Foam::functionObjects::reactionRates
 
 Description
-    Abstract base-class for ignition models
-    for the Weller b-Xi combustion models
+    Writes volume averaged reaction rates in [kmol/m^3/s] for
+    each reaction into the file \<timeDir\>/specieReactionRates.dat
+
+    Example of function object specification:
+    \verbatim
+    reactionRates1
+    {
+        type            reactionRates;
+        libs            ("libchemistryModel.so");
+
+        select          all; // Or points, cellSet, cellZone
+
+        //phase         <phaseName>; // Optional name of the phase
+    }
+    \endverbatim
+
+See also
+    Foam::functionObjects::fvMeshFunctionObject
+    Foam::fvCellSet
+    Foam::functionObjects::logFiles
 
 SourceFiles
-    bXiIgnition.C
+    reactionRates.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef bXiIgnition_H
-#define bXiIgnition_H
+#ifndef functionObjects_reactionRates_H
+#define functionObjects_reactionRates_H
 
-#include "fvModel.H"
-#include "XiFluid.H"
+#include "fvMeshFunctionObject.H"
+#include "fvCellSet.H"
+#include "logFiles.H"
+#include "basicChemistryModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace fv
+namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
-               Class bXiIgnition Declaration
+                     Class reactionRates Declaration
 \*---------------------------------------------------------------------------*/
 
-class bXiIgnition
+class reactionRates
 :
-    public fvModel
+    public fvMeshFunctionObject,
+    public fvCellSet,
+    public logFiles
 {
-    // Private Data
+    // Private Member Data
 
-        //- The XiFluid solver
-        const solvers::XiFluid& XiFluid_;
+        //- Name of the phase
+        const word phaseName_;
+
+        //- Reference to the chemistry model
+        const basicChemistryModel& chemistryModel_;
+
+
+    // Private Member Functions
+
+        //- File header information
+        virtual void writeFileHeader(const label i);
 
 
 public:
 
     //- Runtime type information
-    TypeName("bXiIgnition");
+    TypeName("reactionRates");
 
 
     // Constructors
 
-        //- Construct from explicit source name and mesh
-        bXiIgnition
+        //- Construct from Time and dictionary
+        reactionRates
         (
             const word& name,
-            const word& modelType,
-            const fvMesh& mesh,
+            const Time& runTime,
             const dictionary& dict
         );
 
         //- Disallow default bitwise copy construction
-        bXiIgnition
-        (
-            const bXiIgnition&
-        ) = delete;
+        reactionRates(const reactionRates&) = delete;
+
+
+    //- Destructor
+    virtual ~reactionRates();
 
 
     // Member Functions
 
-        // Checks
+        //- Read the reactionRates data
+        virtual bool read(const dictionary&);
 
-            //- Return the list of fields for which the option adds source term
-            //  to the transport equation
-            virtual wordList addSupFields() const;
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return wordList::null();
+        }
 
-            //- Return true during the ignition duration
-            virtual bool igniting() const = 0;
+        //- Do nothing
+        virtual bool execute();
 
-            //- Return true during the combustion duration
-            virtual bool ignited() const = 0;
-
-
-        // Add explicit and implicit contributions to compressible equation
-
-            virtual void XiCorr
-            (
-                volScalarField& Xi,
-                const volScalarField& b,
-                const volScalarField& mgb
-            ) const = 0;
+        //- Write the specie reaction rates
+        virtual bool write();
 
 
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const bXiIgnition&) = delete;
+        void operator=(const reactionRates&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace fv
+} // End namespace functionObjects
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
