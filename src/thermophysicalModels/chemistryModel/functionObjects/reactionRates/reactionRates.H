@@ -26,7 +26,7 @@ Class
 
 Description
     Writes volume averaged reaction rates in [kmol/m^3/s] for
-    each reaction into the file \<timeDir\>/specieReactionRates.dat
+    each reaction into the file \<timeDir\>/reactionRates.dat
 
     Example of function object specification:
     \verbatim
@@ -38,6 +38,9 @@ Description
         select          all; // Or points, cellSet, cellZone
 
         //phase         <phaseName>; // Optional name of the phase
+
+        //writeFields   false; // Optionally also write the rate fields. Note
+                               // that this can create a lot of data.
     }
     \endverbatim
 
@@ -84,6 +87,9 @@ class reactionRates
         //- Reference to the chemistry model
         const basicChemistryModel& chemistryModel_;
 
+        //- Whether or not to write the reaction rate fields
+        bool writeFields_;
+
 
     // Private Member Functions
 
@@ -129,7 +135,7 @@ public:
         //- Do nothing
         virtual bool execute();
 
-        //- Write the specie reaction rates
+        //- Write the reaction rates
         virtual bool write();
 
 

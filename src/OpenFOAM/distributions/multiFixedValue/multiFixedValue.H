@@ -56,6 +56,7 @@ See also
 #define multiFixedValue_H
 
 #include "distribution.H"
+#include "TableReader.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -73,6 +74,9 @@ class multiFixedValue
     public FieldDistribution<distribution, multiFixedValue>
 {
     // Private Data
+
+        //- Table reader
+        const autoPtr<TableReader<scalar>> reader_;
 
         //- X-coordinates
         scalarField x_;
@@ -132,8 +136,13 @@ public:
         //- Return the mean value
         virtual scalar mean() const;
 
-        //- Return the cumulative density function at the given coordinates
-        virtual tmp<scalarField> CDF(const scalarField& x) const;
+        //- Return the integral of the PDF multiplied by an integer power of x
+        virtual tmp<scalarField> integralPDFxPow
+        (
+            const scalarField& x,
+            const label e,
+            const bool consistent = false
+        ) const;
 
         //- Write to a stream
         virtual void write(Ostream& os, const unitConversion& units) const;

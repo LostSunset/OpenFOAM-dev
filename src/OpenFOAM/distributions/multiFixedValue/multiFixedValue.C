@@ -55,9 +55,14 @@ Foam::distributions::multiFixedValue::multiFixedValue
         dict,
         sampleQ,
         std::move(rndGen)
+    ),
+    reader_
+    (
+        TableReader<scalar>::New(word::null, {defaultUnits, unitNone}, dict)
     )
 {
-    List<Tuple2<scalar, scalar>> values(dict.lookup("values"));
+    List<Tuple2<scalar, scalar>> values =
+        reader_->read({defaultUnits, unitNone}, dict, "values");
 
     // Sort
     Foam::sort
@@ -80,15 +85,11 @@ Foam::distributions::multiFixedValue::multiFixedValue
         }
     }
 
-    // Optionally read units
-    unitConversion units(defaultUnits);
-    units.readIfPresent("units", dict);
-
     // Copy the coordinates
     x_.resize(values.size());
     forAll(values, i)
     {
-        x_[i] = units.toStandard(values[i].first());
+        x_[i] = values[i].first();
     }
 
     // Copy the probabilities. Scale if q != 0.
@@ -119,6 +120,7 @@ Foam::distributions::multiFixedValue::multiFixedValue
 )
 :
     FieldDistribution<distribution, multiFixedValue>(d, sampleQ),
+    reader_(d.reader_, false),
     x_(d.x_),
     P_(d.P_),
     sumP_(d.sumP_)
@@ -180,7 +182,12 @@ Foam::scalar Foam::distributions::multiFixedValue::mean() const
 
 
 Foam::tmp<Foam::scalarField>
-Foam::distributions::multiFixedValue::CDF(const scalarField& x) const
+Foam::distributions::multiFixedValue::integralPDFxPow
+(
+    const scalarField& x,
+    const label e,
+    const bool
+) const
 {
     tmp<scalarField> tResult(new scalarField(x.size()));
     scalarField& result = tResult.ref();
@@ -193,18 +200,22 @@ Foam::distributions::multiFixedValue::CDF(const scalarField& x) const
         i ++;
     }
 
+    scalar integral_PDFxPowE_0_j = P_[0]*integerPow(x_[0], e);
+
     for (label j = 0; j < x_.size() - 1; ++ j)
     {
         while (i < x.size() && x[i] < x_[j + 1])
         {
-            result[i] = sumP_[j + 1];
+            result[i] = integral_PDFxPowE_0_j;
             i ++;
         }
+
+        integral_PDFxPowE_0_j += P_[j + 1]*integerPow(x_[j + 1], e);
     }
 
     while (i < x.size())
     {
-        result[i] = 1;
+        result[i] = integral_PDFxPowE_0_j;
         i ++;
     }
 
@@ -230,10 +241,10 @@ void Foam::distributions::multiFixedValue::write
     List<Tuple2<scalar, scalar>> values(P_.size());
     forAll(values, i)
     {
-        values[i].first() = units.toUser(x_[i]);
+        values[i].first() = x_[i];
         values[i].second() = P[i];
     }
-    writeEntry(os, "values", values);
+    reader_->write(os, {units, unitNone}, values, "values");
 }
 
 
