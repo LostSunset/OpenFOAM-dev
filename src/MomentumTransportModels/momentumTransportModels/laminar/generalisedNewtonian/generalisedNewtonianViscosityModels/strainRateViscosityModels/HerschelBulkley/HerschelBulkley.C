@@ -58,8 +58,8 @@ HerschelBulkley
 )
 :
     strainRateViscosityModel(viscosityProperties, viscosity, U),
-    k_("k", dimKinematicViscosity, 0),
     n_("n", dimless, 0),
+    k_("k", dimKinematicViscosity*pow(dimTime, n_ - 1), 0),
     tau0_("tau0", dimKinematicViscosity/dimTime, 0)
 {
     read(viscosityProperties);
@@ -96,19 +96,16 @@ nu
     const volScalarField& strainRate
 ) const
 {
-    dimensionedScalar tone("tone", dimTime, 1.0);
-    dimensionedScalar rtone("rtone", dimless/dimTime, 1.0);
-
     return
     (
         min
         (
             nu0,
-            (tau0_ + k_*rtone*pow(tone*strainRate, n_))
+            (tau0_ + k_*pow(strainRate, n_))
            /max
             (
                 strainRate,
-                dimensionedScalar ("vSmall", dimless/dimTime, vSmall)
+                dimensionedScalar("vSmall", dimless/dimTime, vSmall)
             )
         )
     );
