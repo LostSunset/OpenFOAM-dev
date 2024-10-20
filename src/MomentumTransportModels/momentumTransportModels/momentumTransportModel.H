@@ -198,6 +198,9 @@ public:
         //- Return the effective viscosity on patch
         virtual tmp<scalarField> nuEff(const label patchi) const = 0;
 
+        //- Return the Reynolds stress tensor [m^2/s^2]
+        virtual tmp<volSymmTensorField> R() const = 0;
+
         //- Return the turbulence kinetic energy
         virtual tmp<volScalarField> k() const = 0;
 
@@ -207,8 +210,8 @@ public:
         //- Return the turbulence specific dissipation rate
         virtual tmp<volScalarField> omega() const = 0;
 
-        //- Return the stress tensor [m^2/s^2]
-        virtual tmp<volSymmTensorField> sigma() const = 0;
+        //- Return the effective surface stress
+        virtual tmp<surfaceVectorField> devTau() const = 0;
 
         //- Return the explicit stress correction matrix
         //  for the momentum equation.
@@ -220,6 +223,9 @@ public:
             const tmp<surfaceVectorField>& devTauCorr,
             volVectorField& U
         ) const;
+
+        //- Return the stress matrix for the momentum equation
+        virtual tmp<fvVectorMatrix> divDevTau(volVectorField& U) const = 0;
 
         //- Validate the fields after construction
         //  Update derived fields as required
