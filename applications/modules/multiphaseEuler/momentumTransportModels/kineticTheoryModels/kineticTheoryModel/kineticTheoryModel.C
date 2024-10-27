@@ -284,7 +284,7 @@ Foam::RASModels::kineticTheoryModel::omega() const
 
 
 Foam::tmp<Foam::volSymmTensorField>
-Foam::RASModels::kineticTheoryModel::sigma() const
+Foam::RASModels::kineticTheoryModel::R() const
 {
     return tmp<volSymmTensorField>
     (
@@ -376,7 +376,7 @@ Foam::RASModels::kineticTheoryModel::devTau() const
                fvc::dotInterpolate(mesh().nf(), dev2(T(fvc::grad(U_))))
              + fvc::snGrad(U_)
             )
-          - fvc::interpolate((rho_*lambda_)*fvc::div(phi_))*mesh().Sf()
+          - fvc::interpolate((rho_*lambda_)*fvc::div(phi_))*mesh().nf()
         )
     );
 }
