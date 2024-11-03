@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "multiCycleConstantbXiIgnition.H"
-#include "psiuMulticomponentThermo.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
@@ -49,6 +48,7 @@ namespace Foam
 void Foam::fv::multiCycleConstantbXiIgnition::readCoeffs(const dictionary& dict)
 {
     period_.read(dict, mesh().time().userUnits());
+    combustionDuration_.read(dict, mesh().time().userUnits());
 }
 
 
@@ -119,15 +119,7 @@ bool Foam::fv::multiCycleConstantbXiIgnition::ignited() const
     {
         reset_ = true;
 
-        psiuMulticomponentThermo& thermo
-        (
-            mesh().lookupObjectRef<psiuMulticomponentThermo>
-            (
-                physicalProperties::typeName
-            )
-        );
-
-        thermo.reset();
+        mesh().lookupObjectRef<solvers::XiFluid>(solver::typeName).reset();
     }
 
     return ignited;
