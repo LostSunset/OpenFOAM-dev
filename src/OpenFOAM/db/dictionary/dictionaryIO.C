@@ -47,7 +47,8 @@ Foam::dictionary::dictionary
       ? parentDict.name()/name
       : name
     ),
-    parent_(parentDict)
+    parent_(parentDict),
+    filePtr_(nullptr)
 {
     read(is);
 }
@@ -56,7 +57,8 @@ Foam::dictionary::dictionary
 Foam::dictionary::dictionary(Istream& is, const bool keepHeader)
 :
     dictionaryName(is.name()),
-    parent_(dictionary::null)
+    parent_(dictionary::null),
+    filePtr_(nullptr)
 {
     // Reset input mode as this is a "top-level" dictionary
     functionEntries::inputModeEntry::clear();
@@ -122,6 +124,14 @@ bool Foam::dictionary::read(Istream& is, const bool keepHeader)
         return false;
     }
 
+    // Cache the current name and file/stream pointer
+    const fileName name0(name());
+    const Istream* filePtr0 = filePtr_;
+
+    // Set the name and file/stream pointer to the given stream
+    name() = is.name();
+    filePtr_ = &is;
+
     token currToken(is);
     if (currToken != token::BEGIN_BLOCK)
     {
@@ -145,6 +155,10 @@ bool Foam::dictionary::read(Istream& is, const bool keepHeader)
 
         return false;
     }
+
+    // Reset the name and file/stream pointer to the original
+    name() = name0;
+    filePtr_ = filePtr0;
 
     return true;
 }
@@ -429,6 +443,13 @@ Foam::wordList Foam::listAllConfigFiles
 }
 
 
+Foam::string Foam::expandArg(const string& arg, const dictionary& dict)
+{
+    string expandedArg(arg);
+    return stringOps::inplaceExpandEntry(expandedArg, dict, true, false);
+}
+
+
 bool Foam::readConfigFile
 (
     const word& configType,
@@ -436,7 +457,6 @@ bool Foam::readConfigFile
     dictionary& parentDict,
     const fileName& configFilesPath,
     const word& configFilesDir,
-    const Pair<string>& contextTypeAndValue,
     const word& region
 )
 {
@@ -444,7 +464,7 @@ bool Foam::readConfigFile
     wordReList args;
     List<Tuple2<word, string>> namedArgs;
 
-    dictArgList(argString, funcType, args, namedArgs, parentDict);
+    dictArgList(argString, funcType, args, namedArgs);
 
     // Search for the configuration file
     fileName path = findConfigFile
@@ -506,6 +526,7 @@ bool Foam::readConfigFile
     DynamicList<wordAndDictionary> fieldArgs;
     forAll(args, i)
     {
+        expandArg(args[i], funcDict);
         fieldArgs.append(wordAndDictionary(args[i], dictionary::null));
     }
     forAll(namedArgs, i)
@@ -552,8 +573,12 @@ bool Foam::readConfigFile
             dictionary& subDict(funcDict.scopedDict(dAk.first()));
             IStringStream entryStream
             (
-                dAk.second() + ' ' + namedArgs[i].second() + ';'
+                dAk.second()
+              + ' '
+              + expandArg(namedArgs[i].second(), funcDict)
+              + ';'
             );
+            entryStream.lineNumber() = parentDict.endLineNumber();
             subDict.set(entry::New(entryStream).ptr());
         }
     }
@@ -580,7 +605,7 @@ bool Foam::readConfigFile
              || namedArgs[i].first() == "name"
             )
             {
-                entryName = namedArgs[i].second();
+                entryName = expandArg(namedArgs[i].second(), funcDict);
                 entryName.strip(" \n");
                 named = true;
             }
@@ -605,7 +630,7 @@ bool Foam::readConfigFile
                 }
                 entryName += namedArgs[i].first();
                 entryName += '=';
-                entryName += namedArgs[i].second();
+                entryName += expandArg(namedArgs[i].second(), funcDict);
             }
             entryName += ')';
             string::stripInvalid<word>(entryName);
@@ -648,13 +673,13 @@ bool Foam::readConfigFile
         FatalIOErrorInFunction(funcDict0)
             << nl << "In " << configType << " entry:" << nl
             << "    " << argString.c_str() << nl
-            << nl << "In " << contextTypeAndValue.first().c_str() << ":" << nl
-            << "    " << contextTypeAndValue.second().c_str() << nl;
+            << nl << "In dictionary " << parentDict.name().c_str()
+            << " at line " << parentDict.endLineNumber() << nl;
 
         word funcType;
         wordReList args;
         List<Tuple2<word, string>> namedArgs;
-        dictArgList(argString, funcType, args, namedArgs, parentDict);
+        dictArgList(argString, funcType, args, namedArgs);
 
         string argList;
         forAll(args, i)

@@ -91,7 +91,7 @@ Foam::functionEntries::includeEntry::insertNamedArgs
         // Parse the argument string
         word funcType;
         wordReList args;
-        dictArgList(fNameArgs, funcType, args, namedArgs, parentDict);
+        dictArgList(fNameArgs, funcType, args, namedArgs);
 
         // Add the named arguments as entries into the parentDict
         // temporarily renaming any existing entries with the same name
@@ -111,7 +111,10 @@ Foam::functionEntries::includeEntry::insertNamedArgs
             // Add the temporary argument entry
             IStringStream entryStream
             (
-                dAk.second() + ' ' + namedArgs[i].second() + ';'
+                dAk.second()
+              + ' '
+              + expandArg(namedArgs[i].second(), parentDict)
+              + ';'
             );
             subDict.set(entry::New(entryStream).ptr());
         }
@@ -200,6 +203,7 @@ bool Foam::functionEntries::includeEntry::execute
 )
 {
     const fileName rawFName(is);
+
     const fileName fName
     (
         includeFileName(is.name().path(), rawFName, parentDict)
@@ -268,6 +272,7 @@ bool Foam::functionEntries::includeEntry::execute
 )
 {
     const fileName rawFName(is);
+
     const fileName fName
     (
         includeFileName(is.name().path(), rawFName, parentDict)
@@ -289,6 +294,7 @@ bool Foam::functionEntries::includeEntry::execute
         {
             Info<< fName << endl;
         }
+
         entry.read(parentDict, ifs);
     }
     else

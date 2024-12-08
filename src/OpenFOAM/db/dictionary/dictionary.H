@@ -169,6 +169,9 @@ class dictionary
         //- Parent dictionary
         const dictionary& parent_;
 
+        //- Current stream/file pointer
+        mutable const Istream* filePtr_;
+
         //- Entries of matching patterns
         DLList<entry*> patternEntries_;
 
@@ -918,8 +921,7 @@ void dictArgList
     const string& argString,
     word& configName,
     wordReList& args,
-    List<Tuple2<word, string>>& namedArgs,
-    const dictionary& dict = dictionary::null
+    List<Tuple2<word, string>>& namedArgs
 );
 
 //- Parse dictionary substitution argument list
@@ -927,8 +929,7 @@ void dictArgList
 (
     const string& argString,
     wordReList& args,
-    List<Tuple2<word, string>>& namedArgs,
-    const dictionary& dict = dictionary::null
+    List<Tuple2<word, string>>& namedArgs
 );
 
 //- Extracts dict name and keyword
@@ -983,6 +984,8 @@ fileName findConfigFile
     const word& region = word::null
 );
 
+string expandArg(const string& arg, const dictionary& dict);
+
 //- Read the specified configuration file
 //  parsing the optional arguments included in the string
 //  'argString', inserting 'field' or 'fields' entries as required
@@ -1008,7 +1011,6 @@ bool readConfigFile
     dictionary& parentDict,
     const fileName& configFilesPath,
     const word& configFilesDir,
-    const Pair<string>& contextTypeAndValue,
     const word& region = word::null
 );
 

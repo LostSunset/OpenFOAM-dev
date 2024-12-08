@@ -152,7 +152,7 @@ void Foam::solvers::multiphaseEuler::facePressureCorrector()
             );
         }
 
-        alphaByADfs = invADVfs & alphafs;
+        alphaByADfs = invADVfs & lalphafs;
         FgByADfs = invADVfs & Fgfs;
     }
 
