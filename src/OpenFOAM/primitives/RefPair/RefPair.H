@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2024-2025 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2025 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -21,74 +21,35 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Class
-    Foam::fv::nucleation
+Typedef
+    Foam::RefPair
 
 Description
-    Mix-in interface for nucleation models. Provides access to properties of
-    the nucleation process, such as diameter and rate of production of nuclei.
-
-SourceFiles
-    nucleation.C
+    Pair of references. Uses Tuple2 rather than Pair as Pair is a derivation of
+    an array which cannot store a reference.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef nucleation_H
-#define nucleation_H
+#ifndef RefPair_H
+#define RefPair_H
 
-#include "DimensionedFieldFwd.H"
-#include "volFieldsFwd.H"
+#include "Tuple2.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace fv
-{
-
-/*---------------------------------------------------------------------------*\
-                          Class nucleation Declaration
-\*---------------------------------------------------------------------------*/
-
-class nucleation
-{
-public:
-
-    //- Runtime type information
-    TypeName("nucleation");
-
-
-    // Constructors
-
-        //- Default construct
-        nucleation();
-
-
-    // Destructor
-    virtual ~nucleation();
-
-
-    // Member Functions
-
-        // Sources
-
-            //- Return the diameter of nuclei
-            virtual tmp<DimensionedField<scalar, volMesh>> d() const = 0;
-
-            //- Return the number rate at which nuclei are generated
-            virtual tmp<DimensionedField<scalar, volMesh>> nDot() const = 0;
-
-            //- Return the mass transfer rate
-            virtual tmp<DimensionedField<scalar, volMesh>> mDot() const = 0;
-
-            //- Return the nucleation time scale
-            virtual tmp<DimensionedField<scalar, volMesh>> tau() const = 0;
-};
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace fv
+template<class Type>
+using RefPair = Tuple2<Type&, Type&>;
+
+template<class Type>
+using ConstRefPair = Tuple2<const Type&, const Type&>;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
